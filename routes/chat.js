@@ -27,7 +27,10 @@ const Message = mongoose.models.Message || mongoose.model('Message', msgSchema);
 router.post('/send', auth, async (req, res) => {
   try {
     const { to, text } = req.body;
-    const msg = await Message.create({ from: req.user.id, to, text });
+    if (!to || !text || !text.trim()) {
+      return res.status(400).json({ success: false, message: '"to" and "text" are required' });
+    }
+    const msg = await Message.create({ from: req.user.id, to, text: text.trim() });
     res.status(201).json({ success: true, message: msg });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

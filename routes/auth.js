@@ -89,11 +89,11 @@ router.put('/profile', async (req, res) => {
     if (!token) return res.status(401).json({ success: false, message: 'No token provided' });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'healthconnect_secret');
-    const { fullName, phone, dateOfBirth, bloodGroup, weight, emergencyContact } = req.body;
+    const { fullName, phone, dateOfBirth, bloodGroup, weight, emergencyContact, medicalHistory, allergies, currentMedications } = req.body;
 
     const updated = await User.findByIdAndUpdate(
       decoded.id,
-      { fullName, phone, dateOfBirth, bloodGroup, weight, emergencyContact },
+      { fullName, phone, dateOfBirth, bloodGroup, weight, emergencyContact, medicalHistory, allergies, currentMedications },
       { new: true, runValidators: true }
     ).select('-password');
 
