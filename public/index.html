@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Health Connect — 24/7 Medical Support</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet"/>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Socket.io -->
+  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     NAVBAR
+═══════════════════════════════════════════════ -->
+<nav class="navbar navbar-expand-lg hc-navbar fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center gap-2" href="#">
+      <div class="brand-icon"><i class="bi bi-heart-pulse-fill"></i></div>
+      <span class="brand-name">Health<span class="text-accent">Connect</span></span>
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto align-items-center gap-1">
+        <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
+        <li class="nav-item"><a class="nav-link" href="#monitoring">Monitoring</a></li>
+        <li class="nav-item"><a class="nav-link" href="#doctors">Doctors</a></li>
+        <li class="nav-item"><a class="nav-link" href="#emergency">Emergency</a></li>
+        <li class="nav-item ms-2">
+          <button class="btn btn-outline-accent btn-sm" onclick="showModal('loginModal')">Sign In</button>
+        </li>
+        <li class="nav-item">
+          <a href="dashboard.html" class="btn btn-accent btn-sm"><i class="bi bi-grid me-1"></i>Dashboard</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════
+     HERO SECTION
+═══════════════════════════════════════════════ -->
+<section class="hero-section" id="home">
+  <div class="hero-bg-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="container h-100">
+    <div class="row align-items-center h-100 py-5">
+      <div class="col-lg-6 hero-content" data-aos="fade-right">
+        <div class="badge-pill mb-4">
+          <span class="live-dot"></span> 24/7 Medical Support Active
+        </div>
+        <h1 class="hero-title">Your Health,<br/><em>Always Connected</em></h1>
+        <p class="hero-subtitle">Real-time body monitoring, instant doctor access, and automatic emergency response — all in one intelligent platform.</p>
+        <div class="d-flex gap-3 flex-wrap mt-4">
+          <button class="btn btn-accent btn-lg" onclick="window.location.href='dashboard.html'">
+            <i class="bi bi-shield-heart me-2"></i>Open Dashboard
+          </button>
+          <button class="btn btn-glass btn-lg" onclick="scrollTo('features')">
+            <i class="bi bi-play-circle me-2"></i>See How It Works
+          </button>
+        </div>
+        <div class="hero-stats mt-5 d-flex gap-4 flex-wrap">
+          <div class="stat-item"><div class="stat-num">50K+</div><div class="stat-label">Active Patients</div></div>
+          <div class="stat-divider"></div>
+          <div class="stat-item"><div class="stat-num">500+</div><div class="stat-label">Expert Doctors</div></div>
+          <div class="stat-divider"></div>
+          <div class="stat-item"><div class="stat-num">99.9%</div><div class="stat-label">Uptime</div></div>
+        </div>
+      </div>
+      <div class="col-lg-6 d-none d-lg-flex justify-content-center" data-aos="fade-left">
+        <div class="hero-dashboard-preview">
+          <div class="preview-card pulse-card">
+            <div class="d-flex align-items-center gap-3 mb-3">
+              <div class="vital-icon bg-danger-soft"><i class="bi bi-heart-pulse text-danger"></i></div>
+              <div>
+                <div class="vital-label">Heart Rate</div>
+                <div class="vital-value">72 <span>bpm</span></div>
+              </div>
+              <span class="badge bg-success-soft text-success ms-auto">Normal</span>
+            </div>
+            <canvas id="heroChart" height="60"></canvas>
+          </div>
+          <div class="preview-card mt-3">
+            <div class="row g-2">
+              <div class="col-6">
+                <div class="mini-vital">
+                  <i class="bi bi-droplet-half text-info"></i>
+                  <div class="mini-val">98%</div>
+                  <div class="mini-lbl">SpO₂</div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="mini-vital">
+                  <i class="bi bi-thermometer-half text-warning"></i>
+                  <div class="mini-val">36.6°</div>
+                  <div class="mini-lbl">Temp</div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="mini-vital">
+                  <i class="bi bi-activity text-success"></i>
+                  <div class="mini-val">120/80</div>
+                  <div class="mini-lbl">BP</div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="mini-vital">
+                  <i class="bi bi-lightning-charge text-purple"></i>
+                  <div class="mini-val">95</div>
+                  <div class="mini-lbl">Glucose</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="preview-doctor-card mt-3 d-flex align-items-center gap-3">
+            <div class="doctor-avatar">👩‍⚕️</div>
+            <div>
+              <div class="fw-600">Dr. Priya Sharma</div>
+              <div class="small text-muted">General Medicine</div>
+            </div>
+            <div class="ms-auto">
+              <span class="online-badge">● Online</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="hero-wave">
+    <svg viewBox="0 0 1440 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,60 C360,100 1080,20 1440,60 L1440,100 L0,100 Z" fill="var(--bg-base)"/>
+    </svg>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     FEATURES SECTION
+═══════════════════════════════════════════════ -->
+<section class="section-pad" id="features">
+  <div class="container">
+    <div class="section-header text-center mb-5">
+      <div class="section-tag">What We Offer</div>
+      <h2 class="section-title">Everything You Need for Complete Health Care</h2>
+      <p class="section-sub">Powered by real-time data and AI-driven insights</p>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-6 col-lg-3">
+        <div class="feature-card" onclick="scrollTo('doctors')">
+          <div class="feature-icon" style="background: linear-gradient(135deg, #22c55e20, #16a34a20)">
+            <i class="bi bi-person-video3 text-success" style="font-size:2rem"></i>
+          </div>
+          <h5>24/7 Doctor Support</h5>
+          <p>Connect instantly with certified doctors any time — day or night, weekdays or holidays.</p>
+          <div class="feature-link">Consult Now <i class="bi bi-arrow-right"></i></div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="feature-card" onclick="scrollTo('monitoring')">
+          <div class="feature-icon" style="background: linear-gradient(135deg, #3b82f620, #1d4ed820)">
+            <i class="bi bi-heart-pulse-fill text-primary" style="font-size:2rem"></i>
+          </div>
+          <h5>Body Monitoring</h5>
+          <p>Track all vital signs in real-time — heart rate, SpO₂, temperature, blood pressure and more.</p>
+          <div class="feature-link">View Dashboard <i class="bi bi-arrow-right"></i></div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="feature-card" onclick="scrollTo('emergency')">
+          <div class="feature-icon" style="background: linear-gradient(135deg, #ef444420, #b91c1c20)">
+            <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size:2rem"></i>
+          </div>
+          <h5>Emergency Response</h5>
+          <p>Auto-detection of critical vitals instantly alerts ambulance services and your emergency contacts.</p>
+          <div class="feature-link">Learn More <i class="bi bi-arrow-right"></i></div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="feature-card">
+          <div class="feature-icon" style="background: linear-gradient(135deg, #a855f720, #7c3aed20)">
+            <i class="bi bi-robot text-purple" style="font-size:2rem"></i>
+          </div>
+          <h5>AI Health Insights</h5>
+          <p>Smart analytics detect patterns and anomalies, giving you proactive health recommendations.</p>
+          <div class="feature-link">Explore AI <i class="bi bi-arrow-right"></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     HEALTH MONITORING DASHBOARD
+═══════════════════════════════════════════════ -->
+<section class="section-pad bg-section" id="monitoring">
+  <div class="container">
+    <div class="row align-items-center mb-5">
+      <div class="col-lg-6">
+        <div class="section-tag">Live Dashboard</div>
+        <h2 class="section-title">Whole Body Monitoring</h2>
+        <p class="section-sub">Every vital sign tracked in real-time. Our platform continuously monitors your health and alerts you (and your doctor) at the first sign of trouble.</p>
+      </div>
+      <div class="col-lg-6 d-flex justify-content-lg-end gap-2 flex-wrap mt-3 mt-lg-0">
+        <button class="btn btn-accent" onclick="startDemo()"><i class="bi bi-play-fill me-1"></i>Start Live Demo</button>
+        <button class="btn btn-outline-secondary" onclick="showModal('loginModal')"><i class="bi bi-download me-1"></i>Export Data</button>
+      </div>
+    </div>
+
+    <!-- Vitals Grid -->
+    <div class="row g-3 mb-4" id="vitalsGrid">
+      <div class="col-6 col-md-4 col-lg-2">
+        <div class="vital-card" id="vc-heart">
+          <div class="vc-icon"><i class="bi bi-heart-pulse-fill text-danger"></i></div>
+          <div class="vc-value" id="v-heart">72</div>
+          <div class="vc-unit">bpm</div>
+          <div class="vc-label">Heart Rate</div>
+          <div class="vc-status normal" id="vs-heart">Normal</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-2">
+        <div class="vital-card" id="vc-spo2">
+          <div class="vc-icon"><i class="bi bi-droplet-half text-info"></i></div>
+          <div class="vc-value" id="v-spo2">98</div>
+          <div class="vc-unit">%</div>
+          <div class="vc-label">SpO₂</div>
+          <div class="vc-status normal" id="vs-spo2">Normal</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-2">
+        <div class="vital-card" id="vc-temp">
+          <div class="vc-icon"><i class="bi bi-thermometer text-warning"></i></div>
+          <div class="vc-value" id="v-temp">36.6</div>
+          <div class="vc-unit">°C</div>
+          <div class="vc-label">Temperature</div>
+          <div class="vc-status normal" id="vs-temp">Normal</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-2">
+        <div class="vital-card" id="vc-bp">
+          <div class="vc-icon"><i class="bi bi-activity text-success"></i></div>
+          <div class="vc-value" id="v-bp">120/80</div>
+          <div class="vc-unit">mmHg</div>
+          <div class="vc-label">Blood Pressure</div>
+          <div class="vc-status normal" id="vs-bp">Normal</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-2">
+        <div class="vital-card" id="vc-glucose">
+          <div class="vc-icon"><i class="bi bi-lightning-charge-fill text-purple"></i></div>
+          <div class="vc-value" id="v-glucose">95</div>
+          <div class="vc-unit">mg/dL</div>
+          <div class="vc-label">Glucose</div>
+          <div class="vc-status normal" id="vs-glucose">Normal</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-2">
+        <div class="vital-card" id="vc-resp">
+          <div class="vc-icon"><i class="bi bi-wind text-teal"></i></div>
+          <div class="vc-value" id="v-resp">16</div>
+          <div class="vc-unit">/min</div>
+          <div class="vc-label">Respiration</div>
+          <div class="vc-status normal" id="vs-resp">Normal</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-3">
+      <div class="col-lg-8">
+        <div class="chart-card">
+          <div class="chart-header">
+            <span><i class="bi bi-graph-up text-accent me-2"></i>7-Day Health Trends</span>
+            <div class="btn-group btn-group-sm" role="group">
+              <button class="btn btn-outline-secondary active" onclick="switchChart('heart')">Heart</button>
+              <button class="btn btn-outline-secondary" onclick="switchChart('spo2')">SpO₂</button>
+              <button class="btn btn-outline-secondary" onclick="switchChart('glucose')">Glucose</button>
+            </div>
+          </div>
+          <canvas id="mainChart" height="120"></canvas>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="chart-card h-100">
+          <div class="chart-header"><span><i class="bi bi-pie-chart-fill text-accent me-2"></i>Health Score</span></div>
+          <div class="text-center py-3">
+            <div class="health-score-ring">
+              <canvas id="scoreChart" width="160" height="160"></canvas>
+              <div class="score-center">
+                <div class="score-num" id="healthScore">87</div>
+                <div class="score-label">Good</div>
+              </div>
+            </div>
+          </div>
+          <div class="score-breakdown">
+            <div class="score-item"><span>Cardiovascular</span><div class="score-bar"><div style="width:90%" class="bar-fill bg-success"></div></div></div>
+            <div class="score-item"><span>Respiratory</span><div class="score-bar"><div style="width:85%" class="bar-fill bg-info"></div></div></div>
+            <div class="score-item"><span>Metabolic</span><div class="score-bar"><div style="width:78%" class="bar-fill bg-warning"></div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     DOCTORS SECTION
+═══════════════════════════════════════════════ -->
+<section class="section-pad" id="doctors">
+  <div class="container">
+    <div class="section-header text-center mb-5">
+      <div class="section-tag">24/7 Available</div>
+      <h2 class="section-title">Our Expert Doctors</h2>
+      <p class="section-sub">Board-certified physicians available around the clock via video, chat, or call</p>
+    </div>
+    <div class="row g-4" id="doctorsGrid">
+      <!-- Populated by JS -->
+    </div>
+    <div class="text-center mt-4">
+      <button class="btn btn-accent btn-lg" onclick="showModal('bookingModal')">
+        <i class="bi bi-calendar-plus me-2"></i>Book an Appointment
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     EMERGENCY SECTION
+═══════════════════════════════════════════════ -->
+<section class="section-pad emergency-section" id="emergency">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-6">
+        <div class="section-tag danger-tag">Emergency Response</div>
+        <h2 class="section-title">Automatic Crisis Detection</h2>
+        <p class="section-sub">When vitals go critical, Health Connect automatically alerts emergency services, your emergency contacts, and our on-call medical team — all within seconds.</p>
+        <div class="emergency-features mt-4">
+          <div class="em-feat"><i class="bi bi-check-circle-fill text-danger"></i><span>Auto-detects abnormal vitals (heart, SpO₂, BP)</span></div>
+          <div class="em-feat"><i class="bi bi-check-circle-fill text-danger"></i><span>Instantly contacts ambulance & emergency services</span></div>
+          <div class="em-feat"><i class="bi bi-check-circle-fill text-danger"></i><span>Notifies your emergency contacts via SMS & call</span></div>
+          <div class="em-feat"><i class="bi bi-check-circle-fill text-danger"></i><span>Shares your real-time location with responders</span></div>
+          <div class="em-feat"><i class="bi bi-check-circle-fill text-danger"></i><span>Logs vitals history for paramedics on arrival</span></div>
+        </div>
+        <button class="btn btn-danger btn-lg mt-4" onclick="triggerEmergencyTest()">
+          <i class="bi bi-telephone-fill me-2"></i>Test Emergency Alert
+        </button>
+      </div>
+      <div class="col-lg-6">
+        <div class="emergency-panel">
+          <div class="ep-header">
+            <span class="blink-dot"></span>
+            <span>Emergency Response Panel</span>
+          </div>
+          <div class="ep-body">
+            <div class="ep-contacts">
+              <div class="ep-contact">
+                <i class="bi bi-telephone-fill text-danger"></i>
+                <div>
+                  <div class="fw-600">Ambulance</div>
+                  <div class="ep-num">108</div>
+                </div>
+                <a href="tel:108" class="btn btn-danger btn-sm ms-auto">Call</a>
+              </div>
+              <div class="ep-contact">
+                <i class="bi bi-shield-fill text-warning"></i>
+                <div>
+                  <div class="fw-600">Emergency Services</div>
+                  <div class="ep-num">112</div>
+                </div>
+                <a href="tel:112" class="btn btn-warning btn-sm ms-auto text-white">Call</a>
+              </div>
+              <div class="ep-contact">
+                <i class="bi bi-telephone-fill text-primary"></i>
+                <div>
+                  <div class="fw-600">Police Helpline</div>
+                  <div class="ep-num">100</div>
+                </div>
+                <a href="tel:100" class="btn btn-primary btn-sm ms-auto">Call</a>
+              </div>
+              <div class="ep-contact">
+                <i class="bi bi-heart-pulse-fill text-accent"></i>
+                <div>
+                  <div class="fw-600">Health Connect 24/7</div>
+                  <div class="ep-num">1800-HC-HELP</div>
+                </div>
+                <a href="tel:18004243557" class="btn btn-accent btn-sm ms-auto">Call</a>
+              </div>
+            </div>
+            <div class="ep-sos mt-3">
+              <button class="sos-btn" onclick="triggerSOS()" id="sosBtn">
+                <span>SOS</span>
+                <small>Hold to activate</small>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     HOW IT WORKS
+═══════════════════════════════════════════════ -->
+<section class="section-pad" id="how">
+  <div class="container">
+    <div class="section-header text-center mb-5">
+      <div class="section-tag">Simple Setup</div>
+      <h2 class="section-title">Get Started in 3 Easy Steps</h2>
+    </div>
+    <div class="row g-4 justify-content-center">
+      <div class="col-md-4">
+        <div class="step-card text-center">
+          <div class="step-num">01</div>
+          <div class="step-icon"><i class="bi bi-person-plus-fill"></i></div>
+          <h5>Create Your Profile</h5>
+          <p>Sign up with your health details, medical history, and emergency contacts in under 2 minutes.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="step-card text-center">
+          <div class="step-num">02</div>
+          <div class="step-icon"><i class="bi bi-watch"></i></div>
+          <h5>Connect Your Device</h5>
+          <p>Sync your wearable or manually input vitals. We support all major health monitoring devices.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="step-card text-center">
+          <div class="step-num">03</div>
+          <div class="step-icon"><i class="bi bi-shield-check-fill"></i></div>
+          <h5>Stay Protected</h5>
+          <p>Our system monitors 24/7 and connects you to doctors or emergency services whenever needed.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     FOOTER
+═══════════════════════════════════════════════ -->
+<footer class="hc-footer">
+  <div class="container">
+    <div class="row g-4 mb-4">
+      <div class="col-lg-4">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <div class="brand-icon"><i class="bi bi-heart-pulse-fill"></i></div>
+          <span class="brand-name fs-5">Health<span class="text-accent">Connect</span></span>
+        </div>
+        <p class="text-muted small">Empowering everyone with intelligent, always-on healthcare. Your health is our priority, 24 hours a day, 7 days a week.</p>
+        <div class="d-flex gap-3 mt-3">
+          <a href="#" class="social-icon"><i class="bi bi-twitter-x"></i></a>
+          <a href="#" class="social-icon"><i class="bi bi-facebook"></i></a>
+          <a href="#" class="social-icon"><i class="bi bi-instagram"></i></a>
+          <a href="#" class="social-icon"><i class="bi bi-linkedin"></i></a>
+        </div>
+      </div>
+      <div class="col-6 col-lg-2">
+        <h6 class="fw-600 mb-3">Services</h6>
+        <ul class="footer-links">
+          <li><a href="#">Doctor Consultation</a></li>
+          <li><a href="#">Body Monitoring</a></li>
+          <li><a href="#">Emergency Alerts</a></li>
+          <li><a href="#">Health Reports</a></li>
+        </ul>
+      </div>
+      <div class="col-6 col-lg-2">
+        <h6 class="fw-600 mb-3">Company</h6>
+        <ul class="footer-links">
+          <li><a href="#">About Us</a></li>
+          <li><a href="#">Careers</a></li>
+          <li><a href="#">Blog</a></li>
+          <li><a href="#">Contact</a></li>
+        </ul>
+      </div>
+      <div class="col-lg-4">
+        <h6 class="fw-600 mb-3">Emergency Helplines</h6>
+        <div class="footer-helplines">
+          <div class="helpline"><i class="bi bi-telephone-fill text-danger"></i><span>Ambulance: <strong>108</strong></span></div>
+          <div class="helpline"><i class="bi bi-shield-fill text-warning"></i><span>Emergency: <strong>112</strong></span></div>
+          <div class="helpline"><i class="bi bi-heart-pulse text-accent"></i><span>Health Connect: <strong>1800-HC-HELP</strong></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p class="text-muted small mb-0">© 2025 Health Connect. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+    </div>
+  </div>
+</footer>
+
+<!-- ═══════════════════════════════════════════════
+     MODALS
+═══════════════════════════════════════════════ -->
+
+<!-- Login Modal -->
+<div class="modal fade" id="loginModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content hc-modal">
+      <div class="modal-header border-0">
+        <h5 class="modal-title"><i class="bi bi-shield-lock me-2 text-accent"></i>Sign In</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="loginError" class="alert alert-danger d-none"></div>
+        <div class="mb-3">
+          <label class="form-label">Email Address</label>
+          <input type="email" class="form-control hc-input" id="loginEmail" placeholder="your@email.com"/>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-control hc-input" id="loginPassword" placeholder="••••••••"/>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="rememberMe"/>
+            <label class="form-check-label small" for="rememberMe">Remember me</label>
+          </div>
+          <a href="#" class="small text-accent">Forgot password?</a>
+        </div>
+        <button class="btn btn-accent w-100" onclick="handleLogin()" id="loginBtn">
+          <span id="loginBtnText">Sign In</span>
+          <span id="loginSpinner" class="spinner-border spinner-border-sm ms-2 d-none"></span>
+        </button>
+        <hr class="my-3"/>
+        <p class="text-center small text-muted">Don't have an account? <a href="#" class="text-accent" onclick="switchModal('loginModal','registerModal')">Register now</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Register Modal -->
+<div class="modal fade" id="registerModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content hc-modal">
+      <div class="modal-header border-0">
+        <h5 class="modal-title"><i class="bi bi-person-plus me-2 text-accent"></i>Create Your Health Profile</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="registerError" class="alert alert-danger d-none"></div>
+        <div id="registerSuccess" class="alert alert-success d-none"></div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Full Name *</label>
+            <input type="text" class="form-control hc-input" id="regName" placeholder="John Doe"/>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Email Address *</label>
+            <input type="email" class="form-control hc-input" id="regEmail" placeholder="your@email.com"/>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Phone Number *</label>
+            <input type="tel" class="form-control hc-input" id="regPhone" placeholder="+91 9876543210"/>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Date of Birth</label>
+            <input type="date" class="form-control hc-input" id="regDob"/>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Blood Group</label>
+            <select class="form-select hc-input" id="regBlood">
+              <option value="Unknown">Select Blood Group</option>
+              <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+              <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Password *</label>
+            <input type="password" class="form-control hc-input" id="regPassword" placeholder="Min. 6 characters"/>
+          </div>
+          <div class="col-12"><hr class="border-subtle my-1"/><small class="text-muted fw-600">Emergency Contact</small></div>
+          <div class="col-md-4">
+            <label class="form-label">Contact Name</label>
+            <input type="text" class="form-control hc-input" id="regEmergName" placeholder="Name"/>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Contact Phone</label>
+            <input type="tel" class="form-control hc-input" id="regEmergPhone" placeholder="+91 9876543210"/>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Relation</label>
+            <select class="form-select hc-input" id="regEmergRelation">
+              <option>Parent</option><option>Spouse</option><option>Sibling</option><option>Friend</option><option>Other</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-accent w-100 mt-4" onclick="handleRegister()" id="registerBtn">
+          <span id="registerBtnText">Create Account</span>
+          <span id="registerSpinner" class="spinner-border spinner-border-sm ms-2 d-none"></span>
+        </button>
+        <p class="text-center small text-muted mt-2">Already have an account? <a href="#" class="text-accent" onclick="switchModal('registerModal','loginModal')">Sign in</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Booking Modal -->
+<div class="modal fade" id="bookingModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content hc-modal">
+      <div class="modal-header border-0">
+        <h5 class="modal-title"><i class="bi bi-calendar-plus me-2 text-accent"></i>Book an Appointment</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="bookingSuccess" class="alert alert-success d-none"></div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Specialty</label>
+            <select class="form-select hc-input" id="bookSpecialty">
+              <option>General Medicine</option><option>Cardiology</option><option>Neurology</option>
+              <option>Orthopedics</option><option>Pediatrics</option><option>Dermatology</option>
+              <option>Psychiatry</option><option>Gynecology</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Consultation Type</label>
+            <select class="form-select hc-input" id="bookType">
+              <option value="video">Video Call</option>
+              <option value="chat">Chat</option>
+              <option value="in-person">In Person</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Preferred Date & Time</label>
+            <input type="datetime-local" class="form-control hc-input" id="bookDateTime"/>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Doctor Name (optional)</label>
+            <input type="text" class="form-control hc-input" id="bookDoctor" placeholder="Any available doctor"/>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Describe Your Symptoms</label>
+            <textarea class="form-control hc-input" id="bookSymptoms" rows="3" placeholder="Describe your symptoms or concerns..."></textarea>
+          </div>
+        </div>
+        <button class="btn btn-accent w-100 mt-4" onclick="handleBooking()">
+          <i class="bi bi-calendar-check me-2"></i>Confirm Appointment
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Emergency Alert Modal -->
+<div class="modal fade" id="emergencyModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content emergency-modal">
+      <div class="modal-body text-center py-5">
+        <div class="emergency-pulse-icon mb-4">🚨</div>
+        <h3 class="text-danger fw-800">Emergency Alert Triggered!</h3>
+        <p class="text-muted">We are contacting emergency services and your emergency contact right now.</p>
+        <div class="emergency-status mt-3">
+          <div class="es-item" id="es-ambulance"><i class="bi bi-clock-history text-warning"></i> Ambulance Dispatch: Notifying...</div>
+          <div class="es-item" id="es-contact"><i class="bi bi-clock-history text-warning"></i> Emergency Contact: Notifying...</div>
+          <div class="es-item" id="es-doctor"><i class="bi bi-clock-history text-warning"></i> On-Call Doctor: Connecting...</div>
+        </div>
+        <button class="btn btn-outline-danger mt-4" data-bs-dismiss="modal">Mark as False Alarm</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:9999">
+  <div id="hcToast" class="toast hc-toast" role="alert" aria-live="assertive">
+    <div class="toast-header border-0">
+      <i class="bi bi-bell-fill me-2 text-accent"></i>
+      <strong class="me-auto" id="toastTitle">Health Connect</strong>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+    </div>
+    <div class="toast-body" id="toastBody"></div>
+  </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

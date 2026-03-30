@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Dashboard — Health Connect</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+  <link rel="stylesheet" href="css/style.css"/>
+  <link rel="stylesheet" href="css/dashboard.css"/>
+</head>
+<body class="dashboard-body">
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon"><i class="bi bi-heart-pulse-fill"></i></div>
+    <span class="brand-name">Health<span class="text-accent">Connect</span></span>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Main</div>
+    <a class="sidebar-link active" href="dashboard.html" data-page="overview">
+      <i class="bi bi-grid-1x2-fill"></i><span>Overview</span>
+    </a>
+    <a class="sidebar-link" href="#" onclick="loadPage('vitals')">
+      <i class="bi bi-heart-pulse"></i><span>Vitals Monitor</span>
+      <span class="badge bg-success ms-auto">Live</span>
+    </a>
+    <a class="sidebar-link" href="#" onclick="loadPage('appointments')">
+      <i class="bi bi-calendar-check"></i><span>Appointments</span>
+      <span class="badge bg-accent ms-auto" id="apptBadge">2</span>
+    </a>
+    <a class="sidebar-link" href="#" onclick="loadPage('reports')">
+      <i class="bi bi-file-medical"></i><span>Health Reports</span>
+    </a>
+    <a class="sidebar-link" href="#" onclick="loadPage('medications')">
+      <i class="bi bi-capsule"></i><span>Medications</span>
+    </a>
+    <div class="nav-section-label mt-3">Connect</div>
+    <a class="sidebar-link" href="#" onclick="loadPage('doctors')">
+      <i class="bi bi-person-video3"></i><span>Find Doctor</span>
+    </a>
+    <a class="sidebar-link" href="#" onclick="loadPage('chat')">
+      <i class="bi bi-chat-dots"></i><span>Messages</span>
+      <span class="badge bg-danger ms-auto">3</span>
+    </a>
+    <div class="nav-section-label mt-3">Account</div>
+    <a class="sidebar-link" href="#" onclick="loadPage('profile')">
+      <i class="bi bi-person-gear"></i><span>My Profile</span>
+    </a>
+    <a class="sidebar-link" href="#" onclick="loadPage('settings')">
+      <i class="bi bi-gear"></i><span>Settings</span>
+    </a>
+  </nav>
+  <div class="sidebar-emergency">
+    <button class="sos-mini" onclick="triggerSOS()">
+      <i class="bi bi-exclamation-triangle-fill"></i> SOS Emergency
+    </button>
+  </div>
+</aside>
+
+<!-- ── Main Content ── -->
+<main class="dashboard-main" id="dashMain">
+
+  <!-- Top Bar -->
+  <header class="dash-topbar">
+    <button class="sidebar-toggle d-lg-none" onclick="toggleSidebar()">
+      <i class="bi bi-list"></i>
+    </button>
+    <div class="topbar-greeting">
+      <h5 id="greetingText">Good morning, <span id="userName">User</span> 👋</h5>
+      <small class="text-muted" id="currentDateTime"></small>
+    </div>
+    <div class="topbar-actions d-flex align-items-center gap-3">
+      <div class="topbar-status">
+        <span class="live-dot"></span>
+        <span class="small text-accent fw-600">Monitoring Active</span>
+      </div>
+      <button class="btn btn-outline-secondary btn-sm position-relative" onclick="loadPage('chat')">
+        <i class="bi bi-bell"></i>
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.55rem">3</span>
+      </button>
+      <div class="dropdown">
+        <button class="btn topbar-avatar dropdown-toggle" data-bs-toggle="dropdown">
+          <i class="bi bi-person-circle fs-4"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end" style="background:var(--bg-card);border:1px solid var(--border)">
+          <li><a class="dropdown-item text-light" href="#" onclick="loadPage('profile')"><i class="bi bi-person me-2 text-accent"></i>Profile</a></li>
+          <li><a class="dropdown-item text-light" href="#" onclick="loadPage('settings')"><i class="bi bi-gear me-2 text-accent"></i>Settings</a></li>
+          <li><hr class="dropdown-divider border-secondary"></li>
+          <li><a class="dropdown-item text-danger" href="index.html"><i class="bi bi-box-arrow-left me-2"></i>Back to Home</a></li>
+        </ul>
+      </div>
+    </div>
+  </header>
+
+  <!-- Page Content -->
+  <div class="dash-content" id="dashContent">
+
+    <!-- ══ OVERVIEW PAGE ══ -->
+    <div id="page-overview">
+
+      <!-- Alert Banner -->
+      <div class="alert-banner mb-4 d-none" id="alertBanner">
+        <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+        <span id="alertBannerText">Warning: Elevated heart rate detected. Consider resting.</span>
+        <button class="btn-close btn-close-white btn-sm ms-auto" onclick="this.parentElement.classList.add('d-none')"></button>
+      </div>
+
+      <!-- Quick Stats Row -->
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+          <div class="stat-widget">
+            <div class="sw-icon bg-danger-soft"><i class="bi bi-heart-pulse-fill text-danger"></i></div>
+            <div class="sw-body">
+              <div class="sw-value" id="sw-heart">72</div>
+              <div class="sw-label">Heart Rate <span class="sw-unit">bpm</span></div>
+              <div class="sw-trend up"><i class="bi bi-arrow-up-short"></i>+2 from last hr</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="stat-widget">
+            <div class="sw-icon bg-info-soft"><i class="bi bi-droplet-half text-info"></i></div>
+            <div class="sw-body">
+              <div class="sw-value" id="sw-spo2">98<span class="sw-unit-inline">%</span></div>
+              <div class="sw-label">Blood Oxygen</div>
+              <div class="sw-trend neutral"><i class="bi bi-dash"></i>Stable</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="stat-widget">
+            <div class="sw-icon bg-warning-soft"><i class="bi bi-thermometer text-warning"></i></div>
+            <div class="sw-body">
+              <div class="sw-value" id="sw-temp">36.6<span class="sw-unit-inline">°C</span></div>
+              <div class="sw-label">Temperature</div>
+              <div class="sw-trend neutral"><i class="bi bi-dash"></i>Normal</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="stat-widget">
+            <div class="sw-icon bg-success-soft"><i class="bi bi-activity text-success"></i></div>
+            <div class="sw-body">
+              <div class="sw-value" id="sw-bp">120/80</div>
+              <div class="sw-label">Blood Pressure</div>
+              <div class="sw-trend down"><i class="bi bi-arrow-down-short"></i>-5 from morning</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Middle Row -->
+      <div class="row g-3 mb-4">
+        <!-- Heart Rate Chart -->
+        <div class="col-lg-8">
+          <div class="dash-card h-100">
+            <div class="dash-card-header">
+              <span><i class="bi bi-graph-up text-accent me-2"></i>Heart Rate — Today</span>
+              <div class="d-flex gap-2">
+                <button class="btn btn-xs btn-ghost active" onclick="setChartRange('1d', this)">1D</button>
+                <button class="btn btn-xs btn-ghost" onclick="setChartRange('7d', this)">7D</button>
+                <button class="btn btn-xs btn-ghost" onclick="setChartRange('30d', this)">30D</button>
+              </div>
+            </div>
+            <canvas id="hrChart" height="100"></canvas>
+          </div>
+        </div>
+        <!-- Health Score -->
+        <div class="col-lg-4">
+          <div class="dash-card h-100">
+            <div class="dash-card-header"><span><i class="bi bi-award text-accent me-2"></i>Health Score</span></div>
+            <div class="text-center py-2">
+              <div class="health-score-ring">
+                <canvas id="dashScoreChart" width="150" height="150"></canvas>
+                <div class="score-center">
+                  <div class="score-num" id="dashScore">87</div>
+                  <div class="score-label">Good</div>
+                </div>
+              </div>
+            </div>
+            <div class="score-breakdown mt-2">
+              <div class="score-item"><span>Cardio</span><div class="score-bar"><div class="bar-fill bg-success" id="sb-cardio" style="width:90%"></div></div><span class="ms-2 small text-muted">90</span></div>
+              <div class="score-item"><span>Lungs</span><div class="score-bar"><div class="bar-fill bg-info" id="sb-lungs" style="width:85%"></div></div><span class="ms-2 small text-muted">85</span></div>
+              <div class="score-item"><span>Metabolic</span><div class="score-bar"><div class="bar-fill bg-warning" id="sb-meta" style="width:78%"></div></div><span class="ms-2 small text-muted">78</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Row -->
+      <div class="row g-3">
+        <!-- Upcoming Appointments -->
+        <div class="col-lg-5">
+          <div class="dash-card h-100">
+            <div class="dash-card-header">
+              <span><i class="bi bi-calendar-event text-accent me-2"></i>Upcoming Appointments</span>
+              <button class="btn btn-xs btn-accent" onclick="showBookingModal()"><i class="bi bi-plus"></i> Book</button>
+            </div>
+            <div id="apptList">
+              <div class="appt-item">
+                <div class="appt-dot bg-success"></div>
+                <div class="appt-info">
+                  <div class="appt-doc">Dr. Priya Sharma</div>
+                  <div class="appt-detail">General Medicine · Video Call</div>
+                  <div class="appt-time"><i class="bi bi-clock me-1"></i>Today, 3:00 PM</div>
+                </div>
+                <div class="appt-actions">
+                  <button class="btn btn-xs btn-accent"><i class="bi bi-camera-video"></i> Join</button>
+                </div>
+              </div>
+              <div class="appt-item">
+                <div class="appt-dot bg-warning"></div>
+                <div class="appt-info">
+                  <div class="appt-doc">Dr. Arjun Mehta</div>
+                  <div class="appt-detail">Cardiology · Video Call</div>
+                  <div class="appt-time"><i class="bi bi-clock me-1"></i>Tomorrow, 10:30 AM</div>
+                </div>
+                <div class="appt-actions">
+                  <button class="btn btn-xs btn-ghost"><i class="bi bi-x"></i></button>
+                </div>
+              </div>
+              <div class="appt-item">
+                <div class="appt-dot bg-info"></div>
+                <div class="appt-info">
+                  <div class="appt-doc">Dr. Meera Nair</div>
+                  <div class="appt-detail">Pediatrics · Chat</div>
+                  <div class="appt-time"><i class="bi bi-clock me-1"></i>Mar 18, 2:00 PM</div>
+                </div>
+                <div class="appt-actions">
+                  <button class="btn btn-xs btn-ghost"><i class="bi bi-x"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Vitals Log -->
+        <div class="col-lg-4">
+          <div class="dash-card h-100">
+            <div class="dash-card-header">
+              <span><i class="bi bi-clock-history text-accent me-2"></i>Vitals Log</span>
+              <span class="small text-muted">Today</span>
+            </div>
+            <div class="vitals-log" id="vitalsLog">
+              <!-- populated by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="col-lg-3">
+          <div class="dash-card h-100">
+            <div class="dash-card-header"><span><i class="bi bi-lightning-charge text-accent me-2"></i>Quick Actions</span></div>
+            <div class="quick-actions">
+              <button class="qa-btn" onclick="loadPage('vitals')">
+                <i class="bi bi-heart-pulse-fill text-danger"></i>
+                <span>Log Vitals</span>
+              </button>
+              <button class="qa-btn" onclick="showBookingModal()">
+                <i class="bi bi-calendar-plus text-accent"></i>
+                <span>Book Doctor</span>
+              </button>
+              <button class="qa-btn" onclick="loadPage('reports')">
+                <i class="bi bi-file-earmark-medical text-info"></i>
+                <span>View Reports</span>
+              </button>
+              <button class="qa-btn" onclick="loadPage('medications')">
+                <i class="bi bi-capsule text-warning"></i>
+                <span>Medications</span>
+              </button>
+              <button class="qa-btn" onclick="loadPage('chat')">
+                <i class="bi bi-chat-dots text-purple"></i>
+                <span>Message Doc</span>
+              </button>
+              <button class="qa-btn danger" onclick="triggerSOS()">
+                <i class="bi bi-exclamation-triangle-fill text-danger"></i>
+                <span>Emergency</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ VITALS PAGE ══ -->
+    <div id="page-vitals" class="d-none">
+      <div class="page-header mb-4">
+        <h4><i class="bi bi-heart-pulse text-accent me-2"></i>Vitals Monitor</h4>
+        <div class="d-flex gap-2">
+          <button class="btn btn-accent btn-sm" onclick="startLiveMonitoring()" id="liveBtn">
+            <i class="bi bi-play-fill me-1"></i>Start Live
+          </button>
+          <button class="btn btn-outline-secondary btn-sm" onclick="logVitalsManual()">
+            <i class="bi bi-pencil me-1"></i>Log Manually
+          </button>
+        </div>
+      </div>
+
+      <!-- Full vitals grid -->
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-md-4 col-lg-2" id="each" v="heart">
+          <div class="vital-card text-center" id="lvc-heart">
+            <div class="vc-icon"><i class="bi bi-heart-pulse-fill text-danger"></i></div>
+            <div class="vc-value" id="lv-heart">72</div>
+            <div class="vc-unit">bpm</div>
+            <div class="vc-label">Heart Rate</div>
+            <div class="vc-status normal" id="lvs-heart">Normal</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+          <div class="vital-card text-center" id="lvc-spo2">
+            <div class="vc-icon"><i class="bi bi-droplet-half text-info"></i></div>
+            <div class="vc-value" id="lv-spo2">98</div>
+            <div class="vc-unit">%</div>
+            <div class="vc-label">SpO₂</div>
+            <div class="vc-status normal" id="lvs-spo2">Normal</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+          <div class="vital-card text-center" id="lvc-temp">
+            <div class="vc-icon"><i class="bi bi-thermometer text-warning"></i></div>
+            <div class="vc-value" id="lv-temp">36.6</div>
+            <div class="vc-unit">°C</div>
+            <div class="vc-label">Temperature</div>
+            <div class="vc-status normal" id="lvs-temp">Normal</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+          <div class="vital-card text-center" id="lvc-bp">
+            <div class="vc-icon"><i class="bi bi-activity text-success"></i></div>
+            <div class="vc-value" id="lv-bp">120/80</div>
+            <div class="vc-unit">mmHg</div>
+            <div class="vc-label">Blood Pressure</div>
+            <div class="vc-status normal" id="lvs-bp">Normal</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+          <div class="vital-card text-center" id="lvc-glucose">
+            <div class="vc-icon"><i class="bi bi-lightning-charge-fill text-purple"></i></div>
+            <div class="vc-value" id="lv-glucose">95</div>
+            <div class="vc-unit">mg/dL</div>
+            <div class="vc-label">Glucose</div>
+            <div class="vc-status normal" id="lvs-glucose">Normal</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+          <div class="vital-card text-center" id="lvc-resp">
+            <div class="vc-icon"><i class="bi bi-wind text-teal"></i></div>
+            <div class="vc-value" id="lv-resp">16</div>
+            <div class="vc-unit">/min</div>
+            <div class="vc-label">Respiration</div>
+            <div class="vc-status normal" id="lvs-resp">Normal</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-lg-6">
+          <div class="dash-card">
+            <div class="dash-card-header"><span><i class="bi bi-graph-up text-accent me-2"></i>Heart Rate (24h)</span></div>
+            <canvas id="liveHrChart" height="120"></canvas>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="dash-card">
+            <div class="dash-card-header"><span><i class="bi bi-droplet text-info me-2"></i>Blood Oxygen (24h)</span></div>
+            <canvas id="liveSpo2Chart" height="120"></canvas>
+          </div>
+        </div>
+        <!-- Manual Entry Form -->
+        <div class="col-12">
+          <div class="dash-card" id="manualEntry" style="display:none">
+            <div class="dash-card-header"><span><i class="bi bi-pencil-square text-accent me-2"></i>Log Vitals Manually</span></div>
+            <div class="row g-3 mt-1">
+              <div class="col-6 col-md-3"><label class="form-label">Heart Rate (bpm)</label><input type="number" class="form-control hc-input" id="m-heart" placeholder="72"/></div>
+              <div class="col-6 col-md-3"><label class="form-label">SpO₂ (%)</label><input type="number" class="form-control hc-input" id="m-spo2" placeholder="98"/></div>
+              <div class="col-6 col-md-3"><label class="form-label">Temperature (°C)</label><input type="number" step="0.1" class="form-control hc-input" id="m-temp" placeholder="36.6"/></div>
+              <div class="col-6 col-md-3"><label class="form-label">BP Systolic</label><input type="number" class="form-control hc-input" id="m-bps" placeholder="120"/></div>
+              <div class="col-6 col-md-3"><label class="form-label">BP Diastolic</label><input type="number" class="form-control hc-input" id="m-bpd" placeholder="80"/></div>
+              <div class="col-6 col-md-3"><label class="form-label">Glucose (mg/dL)</label><input type="number" class="form-control hc-input" id="m-glucose" placeholder="95"/></div>
+              <div class="col-6 col-md-3"><label class="form-label">Weight (kg)</label><input type="number" step="0.1" class="form-control hc-input" id="m-weight" placeholder="70"/></div>
+              <div class="col-6 col-md-3 d-flex align-items-end">
+                <button class="btn btn-accent w-100" onclick="submitManualVitals()"><i class="bi bi-save me-1"></i>Save Reading</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ APPOINTMENTS PAGE ══ -->
+    <div id="page-appointments" class="d-none">
+      <div class="page-header mb-4">
+        <h4><i class="bi bi-calendar-check text-accent me-2"></i>Appointments</h4>
+        <button class="btn btn-accent btn-sm" onclick="showBookingModal()"><i class="bi bi-plus me-1"></i>Book New</button>
+      </div>
+      <div class="row g-3">
+        <div class="col-lg-8">
+          <div class="dash-card">
+            <div class="dash-card-header mb-3">
+              <span>All Appointments</span>
+              <select class="form-select form-select-sm hc-input" style="width:auto">
+                <option>All</option><option>Upcoming</option><option>Completed</option><option>Cancelled</option>
+              </select>
+            </div>
+            <div id="fullApptList">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="dash-card mb-3">
+            <div class="dash-card-header mb-3"><span><i class="bi bi-person-video3 text-accent me-2"></i>Quick Consult</span></div>
+            <p class="text-muted small">Need to talk to a doctor right now? Our 24/7 doctors are ready.</p>
+            <div class="d-grid gap-2">
+              <button class="btn btn-accent" onclick="showBookingModal()"><i class="bi bi-camera-video me-2"></i>Video Consult</button>
+              <button class="btn btn-outline-secondary" onclick="loadPage('chat')"><i class="bi bi-chat-dots me-2"></i>Chat with Doctor</button>
+            </div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-header mb-3"><span><i class="bi bi-bar-chart text-accent me-2"></i>Stats</span></div>
+            <div class="appt-stat"><span>Total Consultations</span><strong>24</strong></div>
+            <div class="appt-stat"><span>This Month</span><strong>3</strong></div>
+            <div class="appt-stat"><span>Avg Duration</span><strong>28 min</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ REPORTS PAGE ══ -->
+    <div id="page-reports" class="d-none">
+      <div class="page-header mb-4">
+        <h4><i class="bi bi-file-medical text-accent me-2"></i>Health Reports</h4>
+        <button class="btn btn-accent btn-sm"><i class="bi bi-download me-1"></i>Export PDF</button>
+      </div>
+      <div class="row g-3">
+        <div class="col-lg-4">
+          <div class="dash-card report-card" onclick="openReport('monthly')">
+            <div class="rc-icon"><i class="bi bi-calendar-month text-accent"></i></div>
+            <div class="rc-title">Monthly Report</div>
+            <div class="rc-date">March 2025</div>
+            <div class="rc-badge bg-success-soft text-success">Ready</div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="dash-card report-card" onclick="openReport('cardiac')">
+            <div class="rc-icon"><i class="bi bi-heart-pulse text-danger"></i></div>
+            <div class="rc-title">Cardiac Analysis</div>
+            <div class="rc-date">Last 30 days</div>
+            <div class="rc-badge bg-success-soft text-success">Ready</div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="dash-card report-card" onclick="openReport('glucose')">
+            <div class="rc-icon"><i class="bi bi-lightning-charge text-warning"></i></div>
+            <div class="rc-title">Glucose Trend</div>
+            <div class="rc-date">Last 7 days</div>
+            <div class="rc-badge bg-warning-soft text-warning">Generating</div>
+          </div>
+        </div>
+        <!-- Detailed Chart -->
+        <div class="col-12">
+          <div class="dash-card">
+            <div class="dash-card-header mb-3">
+              <span><i class="bi bi-graph-up text-accent me-2"></i>30-Day Trend Analysis</span>
+            </div>
+            <canvas id="reportChart" height="80"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ MEDICATIONS PAGE ══ -->
+    <div id="page-medications" class="d-none">
+      <div class="page-header mb-4">
+        <h4><i class="bi bi-capsule text-accent me-2"></i>Medications</h4>
+        <button class="btn btn-accent btn-sm" onclick="addMedication()"><i class="bi bi-plus me-1"></i>Add Med</button>
+      </div>
+      <div class="row g-3">
+        <div class="col-lg-8">
+          <div class="dash-card">
+            <div class="dash-card-header mb-3"><span>Current Medications</span></div>
+            <div id="medsList">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="dash-card">
+            <div class="dash-card-header mb-3"><span><i class="bi bi-alarm text-accent me-2"></i>Today's Schedule</span></div>
+            <div class="med-schedule" id="medSchedule">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ CHAT PAGE ══ -->
+    <div id="page-chat" class="d-none">
+      <div class="page-header mb-4">
+        <h4><i class="bi bi-chat-dots text-accent me-2"></i>Messages</h4>
+      </div>
+      <div class="chat-layout">
+        <div class="chat-sidebar">
+          <div class="chat-search"><input type="text" placeholder="Search conversations..." class="form-control hc-input form-control-sm"/></div>
+          <div class="chat-contacts" id="chatContacts">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+        <div class="chat-main">
+          <div class="chat-header-bar" id="chatHeader">
+            <div class="doctor-avatar">👩‍⚕️</div>
+            <div>
+              <div class="fw-600">Dr. Priya Sharma</div>
+              <div class="small text-success">● Online</div>
+            </div>
+            <div class="ms-auto d-flex gap-2">
+              <button class="btn btn-xs btn-glass"><i class="bi bi-camera-video"></i></button>
+              <button class="btn btn-xs btn-glass"><i class="bi bi-telephone"></i></button>
+            </div>
+          </div>
+          <div class="chat-messages" id="chatMessages">
+            <!-- Populated by JS -->
+          </div>
+          <div class="chat-input-bar">
+            <input type="text" id="chatInput" class="form-control hc-input" placeholder="Type your message..." onkeypress="if(event.key==='Enter') sendChatMsg()"/>
+            <button class="btn btn-accent" onclick="sendChatMsg()"><i class="bi bi-send-fill"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PROFILE PAGE ══ -->
+    <div id="page-profile" class="d-none">
+      <div class="page-header mb-4">
+        <h4><i class="bi bi-person-gear text-accent me-2"></i>My Health Profile</h4>
+        <button class="btn btn-accent btn-sm" onclick="saveProfile()"><i class="bi bi-save me-1"></i>Save Changes</button>
+      </div>
+      <div class="row g-3">
+        <div class="col-lg-4">
+          <div class="dash-card text-center">
+            <div class="profile-avatar">👤</div>
+            <h5 id="profileName">John Doe</h5>
+            <p class="text-muted small" id="profileEmail">john@email.com</p>
+            <div class="profile-badges">
+              <span class="badge bg-accent-soft text-accent">Patient</span>
+              <span class="badge bg-success-soft text-success">Verified</span>
+            </div>
+            <div class="profile-stats mt-3">
+              <div><strong>Blood Group</strong><div id="profileBlood" class="text-accent fw-700">A+</div></div>
+              <div><strong>Age</strong><div id="profileAge" class="text-accent fw-700">32</div></div>
+              <div><strong>Member Since</strong><div class="text-accent fw-700">2024</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-8">
+          <div class="dash-card mb-3">
+            <div class="dash-card-header mb-3"><span>Personal Information</span></div>
+            <div class="row g-3">
+              <div class="col-md-6"><label class="form-label">Full Name</label><input class="form-control hc-input" id="pf-name" value="John Doe"/></div>
+              <div class="col-md-6"><label class="form-label">Email</label><input type="email" class="form-control hc-input" id="pf-email" value="john@email.com"/></div>
+              <div class="col-md-6"><label class="form-label">Phone</label><input class="form-control hc-input" id="pf-phone" value="+91 9876543210"/></div>
+              <div class="col-md-6"><label class="form-label">Date of Birth</label><input type="date" class="form-control hc-input" id="pf-dob"/></div>
+              <div class="col-md-6"><label class="form-label">Blood Group</label>
+                <select class="form-select hc-input" id="pf-blood">
+                  <option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+                </select>
+              </div>
+              <div class="col-md-6"><label class="form-label">Weight (kg)</label><input type="number" class="form-control hc-input" id="pf-weight" placeholder="70"/></div>
+            </div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-header mb-3"><span>Emergency Contact</span></div>
+            <div class="row g-3">
+              <div class="col-md-4"><label class="form-label">Name</label><input class="form-control hc-input" id="pf-ename" placeholder="Contact Name"/></div>
+              <div class="col-md-4"><label class="form-label">Phone</label><input class="form-control hc-input" id="pf-ephone" placeholder="+91 9876543210"/></div>
+              <div class="col-md-4"><label class="form-label">Relation</label>
+                <select class="form-select hc-input" id="pf-erel"><option>Parent</option><option>Spouse</option><option>Sibling</option><option>Friend</option></select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ FIND DOCTOR PAGE ══ -->
+    <div id="page-doctors" class="d-none">
+      <div class="page-header mb-4">
+        <h4><i class="bi bi-person-video3 text-accent me-2"></i>Find a Doctor</h4>
+        <div class="d-flex gap-2">
+          <select class="form-select form-select-sm hc-input" style="width:auto" onchange="filterDoctors(this.value)">
+            <option value="">All Specialties</option>
+            <option>General Medicine</option><option>Cardiology</option><option>Neurology</option>
+            <option>Orthopedics</option><option>Pediatrics</option><option>Dermatology</option>
+          </select>
+        </div>
+      </div>
+      <div class="row g-3" id="dashDoctorsGrid"></div>
+    </div>
+
+    <!-- ══ SETTINGS PAGE ══ -->
+    <div id="page-settings" class="d-none">
+      <div class="page-header mb-4">
+        <h4><i class="bi bi-gear text-accent me-2"></i>Settings</h4>
+      </div>
+      <div class="row g-3">
+        <div class="col-lg-6">
+          <div class="dash-card mb-3">
+            <div class="dash-card-header mb-3"><span><i class="bi bi-bell text-accent me-2"></i>Notifications</span></div>
+            <div class="setting-row"><span>Critical Vital Alerts</span><div class="form-check form-switch"><input class="form-check-input" type="checkbox" checked/></div></div>
+            <div class="setting-row"><span>Appointment Reminders</span><div class="form-check form-switch"><input class="form-check-input" type="checkbox" checked/></div></div>
+            <div class="setting-row"><span>Medication Reminders</span><div class="form-check form-switch"><input class="form-check-input" type="checkbox" checked/></div></div>
+            <div class="setting-row"><span>Weekly Health Report</span><div class="form-check form-switch"><input class="form-check-input" type="checkbox"/></div></div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-header mb-3"><span><i class="bi bi-shield-lock text-accent me-2"></i>Privacy & Security</span></div>
+            <div class="setting-row"><span>Two-Factor Auth</span><div class="form-check form-switch"><input class="form-check-input" type="checkbox"/></div></div>
+            <div class="setting-row"><span>Share data with doctors</span><div class="form-check form-switch"><input class="form-check-input" type="checkbox" checked/></div></div>
+            <div class="mt-3">
+              <button class="btn btn-outline-secondary btn-sm me-2">Change Password</button>
+              <button class="btn btn-outline-danger btn-sm">Delete Account</button>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="dash-card mb-3">
+            <div class="dash-card-header mb-3"><span><i class="bi bi-watch text-accent me-2"></i>Connected Devices</span></div>
+            <div class="device-row">
+              <i class="bi bi-smartwatch text-accent fs-4"></i>
+              <div><div class="fw-600">Samsung Galaxy Watch 5</div><div class="small text-muted">Last synced: 2 min ago</div></div>
+              <span class="badge bg-success-soft text-success ms-auto">Connected</span>
+            </div>
+            <div class="device-row">
+              <i class="bi bi-heart-pulse text-danger fs-4"></i>
+              <div><div class="fw-600">Pulse Oximeter BT</div><div class="small text-muted">Not connected</div></div>
+              <button class="btn btn-xs btn-accent ms-auto">Connect</button>
+            </div>
+            <button class="btn btn-outline-secondary btn-sm mt-3 w-100"><i class="bi bi-plus me-1"></i>Add Device</button>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-header mb-3"><span><i class="bi bi-palette text-accent me-2"></i>Appearance</span></div>
+            <div class="setting-row"><span>Dark Mode</span><div class="form-check form-switch"><input class="form-check-input" type="checkbox" checked/></div></div>
+            <div class="setting-row"><span>Compact View</span><div class="form-check form-switch"><input class="form-check-input" type="checkbox"/></div></div>
+            <div class="mt-3">
+              <label class="form-label small">Units</label>
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-accent active">Metric</button>
+                <button class="btn btn-outline-secondary">Imperial</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /dash-content -->
+</main>
+
+<!-- Booking Modal -->
+<div class="modal fade" id="dashBookingModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content hc-modal">
+      <div class="modal-header border-0">
+        <h5 class="modal-title"><i class="bi bi-calendar-plus me-2 text-accent"></i>Book an Appointment</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="dashBookingSuccess" class="alert alert-success d-none"></div>
+        <div class="row g-3">
+          <div class="col-md-6"><label class="form-label">Specialty</label>
+            <select class="form-select hc-input" id="db-specialty">
+              <option>General Medicine</option><option>Cardiology</option><option>Neurology</option><option>Orthopedics</option><option>Pediatrics</option><option>Dermatology</option>
+            </select></div>
+          <div class="col-md-6"><label class="form-label">Type</label>
+            <select class="form-select hc-input" id="db-type">
+              <option value="video">Video Call</option><option value="chat">Chat</option><option value="in-person">In Person</option>
+            </select></div>
+          <div class="col-md-6"><label class="form-label">Date & Time</label>
+            <input type="datetime-local" class="form-control hc-input" id="db-datetime"/></div>
+          <div class="col-md-6"><label class="form-label">Symptoms</label>
+            <input type="text" class="form-control hc-input" id="db-symptoms" placeholder="Brief description..."/></div>
+        </div>
+        <button class="btn btn-accent w-100 mt-3" onclick="submitDashBooking()"><i class="bi bi-calendar-check me-2"></i>Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Emergency Modal (same as main) -->
+<div class="modal fade" id="dashEmergencyModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content emergency-modal">
+      <div class="modal-body text-center py-5">
+        <div class="emergency-pulse-icon mb-4">🚨</div>
+        <h3 class="text-danger fw-800">Emergency Alert!</h3>
+        <p class="text-muted">Contacting emergency services and emergency contacts now.</p>
+        <div class="emergency-status mt-3">
+          <div class="es-item" id="des-1"><i class="bi bi-clock-history text-warning"></i> Ambulance (108): Notifying...</div>
+          <div class="es-item" id="des-2"><i class="bi bi-clock-history text-warning"></i> Emergency Contact: Notifying...</div>
+          <div class="es-item" id="des-3"><i class="bi bi-clock-history text-warning"></i> On-Call Doctor: Connecting...</div>
+        </div>
+        <div class="mt-4 d-flex gap-2 justify-content-center">
+          <a href="tel:108" class="btn btn-danger">Call 108</a>
+          <button class="btn btn-outline-secondary" data-bs-dismiss="modal">False Alarm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:9999">
+  <div id="dashToast" class="toast hc-toast" role="alert">
+    <div class="toast-header border-0">
+      <i class="bi bi-bell-fill me-2 text-accent"></i>
+      <strong class="me-auto" id="dashToastTitle">Health Connect</strong>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+    </div>
+    <div class="toast-body" id="dashToastBody"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/dashboard.js"></script>
+</body>
+</html>
