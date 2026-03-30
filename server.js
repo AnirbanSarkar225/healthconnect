@@ -33,12 +33,18 @@ app.get('/api/status', (req, res) => {
   res.json({ status: 'online', message: 'Health Connect API is running 24/7', timestamp: new Date() });
 });
 
-// Serve frontend for all other routes
-app.get('*', (req, res) => {
+// Serve index.html only for the root — let express.static handle dashboard.html etc.
+app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Socket.IO — Real-time features (live monitoring, doctor chat)
+// Fallback for any non-API, non-file route
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/')) return next();
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Socket.IO — Real-time
 const onlineUsers = new Map();
 
 io.on('connection', (socket) => {
@@ -46,11 +52,11 @@ io.on('connection', (socket) => {
 
   socket.on('user:join', (userId) => {
     onlineUsers.set(userId, socket.id);
+    socket.join(`user:${userId}`);
     console.log(`👤 User ${userId} is online`);
   });
 
   socket.on('vitals:update', (data) => {
-    // Broadcast critical alerts to admin/doctor room
     if (data.status === 'critical') {
       io.emit('alert:critical', { userId: data.userId, vitals: data.vitals, timestamp: new Date() });
     }
@@ -58,7 +64,10 @@ io.on('connection', (socket) => {
   });
 
   socket.on('chat:message', (msg) => {
-    io.emit('chat:message', { ...msg, timestamp: new Date() });
+    // Only emit to sender and recipient, not everyone
+    const recipientSocket = onlineUsers.get(msg.to);
+    if (recipientSocket) io.to(recipientSocket).emit('chat:message', { ...msg, timestamp: new Date() });
+    socket.emit('chat:message', { ...msg, timestamp: new Date() });
   });
 
   socket.on('emergency:triggered', (data) => {
