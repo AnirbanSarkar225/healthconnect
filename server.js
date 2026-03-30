@@ -9,13 +9,26 @@ const connectDB = require('./config/database');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: '*' } });
 
-// Connect to MongoDB
+// Allow frontend on port 5500 (Live Server) AND port 3000 (same origin)
+const io = new Server(server, {
+  cors: {
+    origin: ['http://localhost:5500', 'http://127.0.0.1:5500', 'http://localhost:3000'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
+  }
+});
+
 connectDB();
 
-// Middleware
-app.use(cors());
+// CORS — must come before routes
+app.use(cors({
+  origin: ['http://localhost:5500', 'http://127.0.0.1:5500', 'http://localhost:3000'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -28,67 +41,54 @@ app.use('/api/appointments', require('./routes/appointments'));
 app.use('/api/emergency', require('./routes/emergency'));
 app.use('/api/chat', require('./routes/chat'));
 
-// Health Check
+// Status endpoint
 app.get('/api/status', (req, res) => {
-  res.json({ status: 'online', message: 'Health Connect API is running 24/7', timestamp: new Date() });
+  res.json({ status: 'online', message: 'Health Connect API running', timestamp: new Date() });
 });
 
-// Serve index.html only for the root — let express.static handle dashboard.html etc.
+// Serve index.html for root — static middleware handles dashboard.html, css, js
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Fallback for any non-API, non-file route
-app.use((req, res, next) => {
-  if (req.path.startsWith('/api/')) return next();
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// Socket.IO — Real-time
+// Socket.IO
 const onlineUsers = new Map();
 
 io.on('connection', (socket) => {
   console.log(`🔌 Client connected: ${socket.id}`);
 
   socket.on('user:join', (userId) => {
-    onlineUsers.set(userId, socket.id);
+    onlineUsers.set(String(userId), socket.id);
     socket.join(`user:${userId}`);
-    console.log(`👤 User ${userId} is online`);
+    console.log(`👤 User ${userId} online`);
   });
 
   socket.on('vitals:update', (data) => {
     if (data.status === 'critical') {
       io.emit('alert:critical', { userId: data.userId, vitals: data.vitals, timestamp: new Date() });
     }
-    socket.emit('vitals:confirmed', { received: true, timestamp: new Date() });
-  });
-
-  socket.on('chat:message', (msg) => {
-    // Only emit to sender and recipient, not everyone
-    const recipientSocket = onlineUsers.get(msg.to);
-    if (recipientSocket) io.to(recipientSocket).emit('chat:message', { ...msg, timestamp: new Date() });
-    socket.emit('chat:message', { ...msg, timestamp: new Date() });
+    socket.emit('vitals:confirmed', { received: true });
   });
 
   socket.on('emergency:triggered', (data) => {
     io.emit('emergency:alert', { ...data, timestamp: new Date() });
-    console.log(`🚨 Emergency triggered by user: ${data.userId}`);
+    console.log(`🚨 Emergency: user ${data.userId}`);
   });
 
   socket.on('disconnect', () => {
     onlineUsers.forEach((sid, uid) => { if (sid === socket.id) onlineUsers.delete(uid); });
-    console.log(`🔌 Client disconnected: ${socket.id}`);
+    console.log(`🔌 Disconnected: ${socket.id}`);
   });
 });
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`
-╔══════════════════════════════════════╗
-║    🏥 HEALTH CONNECT SERVER          ║
-║    Running on: http://localhost:${PORT}  ║
-║    Status: ONLINE 24/7               ║
-╚══════════════════════════════════════╝
+╔══════════════════════════════════════════╗
+║    🏥 HEALTH CONNECT SERVER              ║
+║    API:      http://localhost:${PORT}/api    ║
+║    Frontend: http://localhost:5500       ║
+╚══════════════════════════════════════════╝
   `);
 });
 

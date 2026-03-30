@@ -22,7 +22,7 @@
   </div>
   <nav class="sidebar-nav">
     <div class="nav-section-label">Main</div>
-    <a class="sidebar-link active" href="dashboard.html" data-page="overview">
+    <a class="sidebar-link active" href="#" onclick="loadPage('overview')">
       <i class="bi bi-grid-1x2-fill"></i><span>Overview</span>
     </a>
     <a class="sidebar-link" href="#" onclick="loadPage('vitals')">
@@ -202,39 +202,7 @@
               <button class="btn btn-xs btn-accent" onclick="showBookingModal()"><i class="bi bi-plus"></i> Book</button>
             </div>
             <div id="apptList">
-              <div class="appt-item">
-                <div class="appt-dot bg-success"></div>
-                <div class="appt-info">
-                  <div class="appt-doc">Dr. Priya Sharma</div>
-                  <div class="appt-detail">General Medicine · Video Call</div>
-                  <div class="appt-time"><i class="bi bi-clock me-1"></i>Today, 3:00 PM</div>
-                </div>
-                <div class="appt-actions">
-                  <button class="btn btn-xs btn-accent"><i class="bi bi-camera-video"></i> Join</button>
-                </div>
-              </div>
-              <div class="appt-item">
-                <div class="appt-dot bg-warning"></div>
-                <div class="appt-info">
-                  <div class="appt-doc">Dr. Arjun Mehta</div>
-                  <div class="appt-detail">Cardiology · Video Call</div>
-                  <div class="appt-time"><i class="bi bi-clock me-1"></i>Tomorrow, 10:30 AM</div>
-                </div>
-                <div class="appt-actions">
-                  <button class="btn btn-xs btn-ghost"><i class="bi bi-x"></i></button>
-                </div>
-              </div>
-              <div class="appt-item">
-                <div class="appt-dot bg-info"></div>
-                <div class="appt-info">
-                  <div class="appt-doc">Dr. Meera Nair</div>
-                  <div class="appt-detail">Pediatrics · Chat</div>
-                  <div class="appt-time"><i class="bi bi-clock me-1"></i>Mar 18, 2:00 PM</div>
-                </div>
-                <div class="appt-actions">
-                  <button class="btn btn-xs btn-ghost"><i class="bi bi-x"></i></button>
-                </div>
-              </div>
+              <div class="text-center text-muted small py-3">Loading appointments...</div>
             </div>
           </div>
         </div>

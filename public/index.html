@@ -70,7 +70,7 @@
           <button class="btn btn-accent btn-lg" onclick="window.location.href='dashboard.html'">
             <i class="bi bi-shield-heart me-2"></i>Open Dashboard
           </button>
-          <button class="btn btn-glass btn-lg" onclick="scrollTo('features')">
+          <button class="btn btn-glass btn-lg" onclick="scrollToSection('features')">
             <i class="bi bi-play-circle me-2"></i>See How It Works
           </button>
         </div>
@@ -160,7 +160,7 @@
     </div>
     <div class="row g-4">
       <div class="col-md-6 col-lg-3">
-        <div class="feature-card" onclick="scrollTo('doctors')">
+        <div class="feature-card" onclick="scrollToSection('doctors')">
           <div class="feature-icon" style="background: linear-gradient(135deg, #22c55e20, #16a34a20)">
             <i class="bi bi-person-video3 text-success" style="font-size:2rem"></i>
           </div>
@@ -170,7 +170,7 @@
         </div>
       </div>
       <div class="col-md-6 col-lg-3">
-        <div class="feature-card" onclick="scrollTo('monitoring')">
+        <div class="feature-card" onclick="scrollToSection('monitoring')">
           <div class="feature-icon" style="background: linear-gradient(135deg, #3b82f620, #1d4ed820)">
             <i class="bi bi-heart-pulse-fill text-primary" style="font-size:2rem"></i>
           </div>
@@ -180,7 +180,7 @@
         </div>
       </div>
       <div class="col-md-6 col-lg-3">
-        <div class="feature-card" onclick="scrollTo('emergency')">
+        <div class="feature-card" onclick="scrollToSection('emergency')">
           <div class="feature-icon" style="background: linear-gradient(135deg, #ef444420, #b91c1c20)">
             <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size:2rem"></i>
           </div>
@@ -285,9 +285,9 @@
           <div class="chart-header">
             <span><i class="bi bi-graph-up text-accent me-2"></i>7-Day Health Trends</span>
             <div class="btn-group btn-group-sm" role="group">
-              <button class="btn btn-outline-secondary active" onclick="switchChart('heart')">Heart</button>
-              <button class="btn btn-outline-secondary" onclick="switchChart('spo2')">SpO₂</button>
-              <button class="btn btn-outline-secondary" onclick="switchChart('glucose')">Glucose</button>
+              <button class="btn btn-outline-secondary active" onclick="switchChart('heart', this)">Heart</button>
+              <button class="btn btn-outline-secondary" onclick="switchChart('spo2', this)">SpO₂</button>
+              <button class="btn btn-outline-secondary" onclick="switchChart('glucose', this)">Glucose</button>
             </div>
           </div>
           <canvas id="mainChart" height="120"></canvas>
