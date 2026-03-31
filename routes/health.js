@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const HealthData = require('../models/HealthData');
 const jwt = require('jsonwebtoken');
-
 const auth = (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
@@ -13,7 +12,6 @@ const auth = (req, res, next) => {
     res.status(401).json({ success: false, message: 'Invalid or expired token' });
   }
 };
-
 router.post('/vitals', auth, async (req, res) => {
   try {
     const { vitals, location } = req.body;
@@ -26,7 +24,6 @@ router.post('/vitals', auth, async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
-
 router.get('/vitals', auth, async (req, res) => {
   try {
     const data = await HealthData.find({ userId: req.user.id }).sort({ timestamp: -1 }).limit(50);
@@ -35,7 +32,6 @@ router.get('/vitals', auth, async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
-
 router.get('/latest', auth, async (req, res) => {
   try {
     const data = await HealthData.findOne({ userId: req.user.id }).sort({ timestamp: -1 });
@@ -44,7 +40,6 @@ router.get('/latest', auth, async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
-
 router.get('/summary', auth, async (req, res) => {
   try {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
@@ -57,5 +52,4 @@ router.get('/summary', auth, async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
-
 module.exports = router;

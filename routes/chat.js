@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
-
 const auth = (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
@@ -11,7 +10,6 @@ const auth = (req, res, next) => {
     next();
   } catch { res.status(401).json({ success: false, message: 'Invalid token' }); }
 };
-
 const msgSchema = new mongoose.Schema({
   from: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   to: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
@@ -21,7 +19,6 @@ const msgSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 const Message = mongoose.models.Message || mongoose.model('Message', msgSchema);
-
 router.post('/send', auth, async (req, res) => {
   try {
     const { to, text } = req.body;
@@ -34,7 +31,6 @@ router.post('/send', auth, async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
-
 router.get('/messages/:userId', auth, async (req, res) => {
   try {
     const msgs = await Message.find({
@@ -48,7 +44,6 @@ router.get('/messages/:userId', auth, async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
-
 router.get('/conversations', auth, async (req, res) => {
   try {
     const msgs = await Message.find({
@@ -59,5 +54,4 @@ router.get('/conversations', auth, async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
-
 module.exports = router;

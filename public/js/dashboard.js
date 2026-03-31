@@ -1,21 +1,16 @@
-
 const API = 'http://localhost:3000/api';
 let authToken   = localStorage.getItem('hc_token') || null;
 let currentUser = null;
 let liveInterval = null;
 let hrChart = null, dashScore = null, reportChartInst = null, liveHrC = null, liveSpo2C = null;
-
 let localStream  = null;
 let camEnabled   = true;
 let micEnabled   = true;
-
 (function authGuard() {
   if (!authToken) {
     window.location.href = 'index.html?require_login=1';
   }
 })();
-
-
 function showConfirm(message, onConfirm) {
   const textEl = document.getElementById('confirmModalText');
   const okBtn  = document.getElementById('confirmModalOk');
@@ -31,7 +26,6 @@ function showConfirm(message, onConfirm) {
   freshBtn.addEventListener('click', handler);
   modal.show();
 }
-
 function showToast(title, body) {
   const titleEl = document.getElementById('dashToastTitle');
   const bodyEl  = document.getElementById('dashToastBody');
@@ -40,13 +34,11 @@ function showToast(title, body) {
   const toastEl = document.getElementById('dashToast');
   if (toastEl) new bootstrap.Toast(toastEl, { delay: 4000 }).show();
 }
-
 function showBookingModal() {
   const dtInput = document.getElementById('db-datetime');
   if (dtInput) dtInput.value = new Date(Date.now() + 3600000).toISOString().slice(0, 16);
   new bootstrap.Modal(document.getElementById('dashBookingModal')).show();
 }
-
 function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('sidebarOverlay');
@@ -72,7 +64,6 @@ function hideChatContacts() {
   if (sidebar) sidebar.classList.remove('mobile-visible');
   if (main) main.classList.remove('mobile-hidden');
 }
-
 async function apiCall(endpoint, method = 'GET', body = null) {
   const opts = {
     method,
@@ -89,7 +80,6 @@ async function apiCall(endpoint, method = 'GET', body = null) {
     return { success: false, message: 'Cannot reach server on port 3000. Is the backend running?' };
   }
 }
-
 function updateDateTime() {
   const now   = new Date();
   const hour  = now.getHours();
@@ -102,7 +92,6 @@ function updateDateTime() {
     now.toLocaleDateString('en-IN', { weekday:'long', year:'numeric', month:'long', day:'numeric' }) +
     ' · ' + now.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
 }
-
 async function loadCurrentUser() {
   const res = await apiCall('/auth/me');
   if (res.success) {
@@ -120,7 +109,6 @@ async function loadCurrentUser() {
     window.location.href = 'index.html?session_expired=1';
   }
 }
-
 function logout() {
   stopLiveMonitoring();
   stopCamera();
@@ -129,18 +117,14 @@ function logout() {
   localStorage.removeItem('hc_name');
   window.location.href = 'index.html';
 }
-
 const PAGES = ['overview','vitals','appointments','reports','medications','doctors','chat','profile','settings'];
-
 function loadPage(page) {
   PAGES.forEach(p => document.getElementById(`page-${p}`)?.classList.add('d-none'));
   const target = document.getElementById(`page-${page}`);
   if (target) target.classList.remove('d-none');
-
   document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
   const activeLink = document.querySelector(`.sidebar-link[onclick*="${page}"]`);
   if (activeLink) activeLink.classList.add('active');
-
   if (page === 'overview')     loadOverviewAppointments();
   if (page === 'vitals')       initVitalsPage();
   if (page === 'appointments') loadAppointmentsPage();
@@ -149,14 +133,11 @@ function loadPage(page) {
   if (page === 'doctors')      renderDashDoctors();
   if (page === 'chat')         initChat();
   if (page === 'profile')      { if (currentUser) populateProfile(currentUser); }
-
   document.getElementById('sidebar').classList.remove('open');
 }
-
 function randArr(base, variance, len) {
   return Array.from({ length: len }, () => Math.round(base + (Math.random() - 0.5) * variance * 2));
 }
-
 function initHRChart() {
   const ctx = document.getElementById('hrChart');
   if (!ctx || hrChart) return;
@@ -180,7 +161,6 @@ function initHRChart() {
     }
   });
 }
-
 function initDashScore() {
   const ctx = document.getElementById('dashScoreChart');
   if (!ctx || dashScore) return;
@@ -190,7 +170,6 @@ function initDashScore() {
     options: { plugins: { legend: { display: false }, tooltip: { enabled: false } }, animation: { duration: 1200 } }
   });
 }
-
 function setChartRange(range, btn) {
   document.querySelectorAll('.btn-xs.btn-ghost').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
@@ -204,7 +183,6 @@ function setChartRange(range, btn) {
   hrChart.data.datasets[0].data = randArr(72, 10, pts);
   hrChart.update();
 }
-
 function initVitalsPage() {
   const ctx1 = document.getElementById('liveHrChart');
   const ctx2 = document.getElementById('liveSpo2Chart');
@@ -223,7 +201,6 @@ function initVitalsPage() {
     });
   }
 }
-
 function startLiveMonitoring() {
   const btn = document.getElementById('liveBtn');
   if (liveInterval) {
@@ -233,7 +210,6 @@ function startLiveMonitoring() {
   btn.innerHTML = '<i class="bi bi-stop-fill me-1"></i>Stop Live';
   btn.classList.replace('btn-accent','btn-danger');
   showToast('Live Monitoring', 'Real-time vitals now active.');
-
   liveInterval = setInterval(async () => {
     const v = {
       heart:   Math.round(65 + Math.random() * 20),
@@ -244,12 +220,10 @@ function startLiveMonitoring() {
     };
     const bps = Math.round(110 + Math.random() * 25);
     const bpd = Math.round(70  + Math.random() * 20);
-
     ['heart','spo2','temp','glucose','resp'].forEach(k => {
       const el = document.getElementById(`lv-${k}`); if (el) el.textContent = v[k];
     });
     const bpEl = document.getElementById('lv-bp'); if (bpEl) bpEl.textContent = `${bps}/${bpd}`;
-
     ['sw-heart','sw-spo2','sw-temp','sw-bp'].forEach(id => {
       const el = document.getElementById(id);
       if (!el) return;
@@ -258,20 +232,16 @@ function startLiveMonitoring() {
       if (id === 'sw-temp')  el.innerHTML   = `${v.temp}<span class="sw-unit-inline">°C</span>`;
       if (id === 'sw-bp')    el.textContent = `${bps}/${bpd}`;
     });
-
     if (liveHrC) {
       liveHrC.data.datasets[0].data.push(v.heart);
       liveHrC.data.datasets[0].data.shift();
       liveHrC.update('none');
     }
-
     addVitalsLogEntry(v.heart, v.spo2);
-
     const res = await apiCall('/health/vitals', 'POST', {
       vitals: { heartRate:v.heart, oxygenSaturation:v.spo2, temperature:v.temp, bloodGlucose:v.glucose, respiratoryRate:v.resp, bloodPressureSystolic:bps, bloodPressureDiastolic:bpd }
     });
     if (!res.success) console.warn('Vitals save failed:', res.message);
-
     if (v.heart > 100 || v.spo2 < 96) {
       const banner = document.getElementById('alertBanner');
       const txt    = document.getElementById('alertBannerText');
@@ -284,7 +254,6 @@ function startLiveMonitoring() {
     }
   }, 2500);
 }
-
 function stopLiveMonitoring() {
   if (!liveInterval) return;
   clearInterval(liveInterval);
@@ -296,12 +265,10 @@ function stopLiveMonitoring() {
   }
   showToast('Monitoring Paused', 'Live monitoring stopped.');
 }
-
 function logVitalsManual() {
   const el = document.getElementById('manualEntry');
   if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
-
 async function submitManualVitals() {
   const vitals = {};
   const map = { 'm-heart':'heartRate', 'm-spo2':'oxygenSaturation', 'm-temp':'temperature', 'm-bps':'bloodPressureSystolic', 'm-bpd':'bloodPressureDiastolic', 'm-glucose':'bloodGlucose', 'm-weight':'weight' };
@@ -310,7 +277,6 @@ async function submitManualVitals() {
     if (!isNaN(val) && val > 0) vitals[key] = val;
   });
   if (!Object.keys(vitals).length) { showToast('No Data', 'Please enter at least one value.'); return; }
-
   const res = await apiCall('/health/vitals', 'POST', { vitals });
   if (res.success) {
     showToast('✅ Vitals Saved', 'Reading logged to your health record.');
@@ -321,7 +287,6 @@ async function submitManualVitals() {
     showToast('❌ Error', res.message);
   }
 }
-
 const logEntries = [];
 function addVitalsLogEntry(hr, spo2) {
   const now = new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
@@ -344,12 +309,10 @@ function renderVitalsLog() {
       <span class="vl-status ${e.status}">${e.status === 'warning' ? 'Warning' : 'Normal'}</span>
     </div>`).join('');
 }
-
 async function loadOverviewAppointments() {
   const el = document.getElementById('apptList');
   if (!el) return;
   el.innerHTML = '<div class="text-center py-3" style="color:var(--text-secondary)">Loading...</div>';
-
   const res = await apiCall('/appointments');
   if (!res.success) {
     el.innerHTML = `<div class="text-center py-3" style="color:var(--danger)">${res.message}</div>`;
@@ -381,7 +344,6 @@ async function loadOverviewAppointments() {
   const badge = document.getElementById('apptBadge');
   if (badge) badge.textContent = upcoming.length;
 }
-
 async function loadAppointmentsPage() {
   const el = document.getElementById('fullApptList');
   if (!el) return;
@@ -416,7 +378,6 @@ async function loadAppointmentsPage() {
     </div>`;
   }).join('');
 }
-
 async function cancelAppointment(id, btn) {
   showConfirm('Cancel this appointment?', async () => {
     btn.disabled = true;
@@ -432,7 +393,6 @@ async function cancelAppointment(id, btn) {
     }
   });
 }
-
 async function submitDashBooking() {
   const data = {
     specialty:   document.getElementById('db-specialty').value,
@@ -441,7 +401,6 @@ async function submitDashBooking() {
     symptoms:    document.getElementById('db-symptoms').value || ''
   };
   if (!data.scheduledAt) { showToast('Missing Date', 'Please select a date and time.'); return; }
-
   const res = await apiCall('/appointments', 'POST', data);
   if (res.success) {
     const successEl = document.getElementById('dashBookingSuccess');
@@ -459,15 +418,15 @@ async function submitDashBooking() {
     showToast('Booking Failed', res.message || 'Please try again.');
   }
 }
-
 let callTimerInterval = null;
 let callSeconds = 0;
 let callChatMessages = [];
 let vcChatOpen = false;
 let vcIsMaximized = false;
 let vcIsMinimized = false;
-
+let currentCallAppointmentId = null;
 async function openVideoCall(appointmentId, doctorName) {
+  currentCallAppointmentId = appointmentId;
   const win = document.getElementById('videoCallWindow');
   win.style.display = 'flex';
   win.classList.remove('vc-maximized', 'vc-minimized');
@@ -478,26 +437,19 @@ async function openVideoCall(appointmentId, doctorName) {
   win.style.height = '580px';
   vcIsMaximized = false;
   vcIsMinimized = false;
-
   const doctorNameEl = document.getElementById('videoCallDoctorName');
   if (doctorNameEl) doctorNameEl.textContent = `Video Call — ${doctorName}`;
-
   const localVideo = document.getElementById('localVideo');
   const statusEl = document.getElementById('videoStatus');
-
   if (statusEl) statusEl.textContent = 'Accessing camera and microphone...';
-
   callChatMessages = [];
   renderCallChat();
-
   const chatPanel = document.getElementById('vcChatPanel');
   if (chatPanel) chatPanel.classList.remove('open');
   vcChatOpen = false;
   const chatToggle = document.getElementById('btnToggleChat');
   if (chatToggle) chatToggle.classList.remove('active');
-
   startCallTimer();
-
   try {
     localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
     if (localVideo) {
@@ -508,22 +460,18 @@ async function openVideoCall(appointmentId, doctorName) {
     camEnabled = true;
     micEnabled = true;
     updateVideoControlIcons();
-
     setTimeout(() => {
       if (statusEl) statusEl.textContent = `Connected with ${doctorName}`;
       const remoteContainer = document.getElementById('remoteVideoContainer');
       if (remoteContainer) remoteContainer.classList.remove('d-none');
     }, 2000);
-
   } catch (err) {
     if (statusEl) statusEl.textContent = `Camera error: ${err.message}. Check browser permissions.`;
     showToast('Camera Error', 'Please allow camera/microphone access in your browser.');
   }
-
   initVCDrag();
   initVCResize();
 }
-
 function startCallTimer() {
   callSeconds = 0;
   const el = document.getElementById('vcCallTimer');
@@ -537,25 +485,21 @@ function startCallTimer() {
     if (el) el.textContent = `${m}:${s}`;
   }, 1000);
 }
-
 function stopCallTimer() {
   if (callTimerInterval) { clearInterval(callTimerInterval); callTimerInterval = null; }
 }
-
 function toggleCamera() {
   if (!localStream) return;
   localStream.getVideoTracks().forEach(t => { t.enabled = !t.enabled; });
   camEnabled = !camEnabled;
   updateVideoControlIcons();
 }
-
 function toggleMic() {
   if (!localStream) return;
   localStream.getAudioTracks().forEach(t => { t.enabled = !t.enabled; });
   micEnabled = !micEnabled;
   updateVideoControlIcons();
 }
-
 function updateVideoControlIcons() {
   const camBtn = document.getElementById('btnToggleCam');
   const micBtn = document.getElementById('btnToggleMic');
@@ -570,7 +514,6 @@ function updateVideoControlIcons() {
     micBtn.title = micEnabled ? 'Mute' : 'Unmute';
   }
 }
-
 function stopCamera() {
   if (localStream) {
     localStream.getTracks().forEach(t => t.stop());
@@ -581,15 +524,23 @@ function stopCamera() {
   const remoteContainer = document.getElementById('remoteVideoContainer');
   if (remoteContainer) remoteContainer.classList.add('d-none');
 }
-
-function endCall() {
+async function endCall() {
   stopCamera();
   stopCallTimer();
   const win = document.getElementById('videoCallWindow');
   if (win) win.style.display = 'none';
   showToast('Call Ended', 'Video consultation has ended.');
+  if (currentCallAppointmentId) {
+    const res = await apiCall(`/appointments/${currentCallAppointmentId}`, 'DELETE');
+    if (res.success) {
+      showToast('Appointment Removed', 'Completed appointment has been removed.');
+    }
+    currentCallAppointmentId = null;
+    loadOverviewAppointments();
+    const page = document.getElementById('page-appointments');
+    if (page && !page.classList.contains('d-none')) loadAppointmentsPage();
+  }
 }
-
 function toggleMinimizeCall() {
   const win = document.getElementById('videoCallWindow');
   if (!win) return;
@@ -603,7 +554,6 @@ function toggleMinimizeCall() {
     vcIsMinimized = true;
   }
 }
-
 function toggleMaximizeCall() {
   const win = document.getElementById('videoCallWindow');
   if (!win) return;
@@ -617,7 +567,6 @@ function toggleMaximizeCall() {
     vcIsMaximized = true;
   }
 }
-
 function toggleCallChat() {
   const panel = document.getElementById('vcChatPanel');
   const btn = document.getElementById('btnToggleChat');
@@ -634,7 +583,6 @@ function toggleCallChat() {
     }, 350);
   }
 }
-
 function renderCallChat() {
   const el = document.getElementById('vcChatMessages');
   if (!el) return;
@@ -652,7 +600,6 @@ function renderCallChat() {
     </div>`).join('');
   el.scrollTop = el.scrollHeight;
 }
-
 function sendCallChatMsg() {
   const input = document.getElementById('vcChatInput');
   const text = input?.value.trim();
@@ -661,7 +608,6 @@ function sendCallChatMsg() {
   callChatMessages.push({ from: 'user', text, time: now });
   input.value = '';
   renderCallChat();
-
   setTimeout(() => {
     const replies = [
       'Noted, I can see that in your records.',
@@ -684,14 +630,11 @@ function sendCallChatMsg() {
     }
   }, 1500);
 }
-
 function initVCDrag() {
   const win = document.getElementById('videoCallWindow');
   const titlebar = document.getElementById('vcTitlebar');
   if (!win || !titlebar) return;
-
   let isDragging = false, offsetX = 0, offsetY = 0;
-
   titlebar.addEventListener('mousedown', (e) => {
     if (e.target.closest('.vc-title-actions') || vcIsMaximized) return;
     isDragging = true;
@@ -703,7 +646,6 @@ function initVCDrag() {
     offsetY = e.clientY - rect.top;
     document.body.style.userSelect = 'none';
   });
-
   document.addEventListener('mousemove', (e) => {
     if (!isDragging) return;
     let newLeft = e.clientX - offsetX;
@@ -713,7 +655,6 @@ function initVCDrag() {
     win.style.left = newLeft + 'px';
     win.style.top = newTop + 'px';
   });
-
   document.addEventListener('mouseup', () => {
     if (isDragging) {
       isDragging = false;
@@ -721,11 +662,9 @@ function initVCDrag() {
     }
   });
 }
-
 function initVCResize() {
   const win = document.getElementById('videoCallWindow');
   if (!win) return;
-
   const handles = win.querySelectorAll('.vc-resize-handle');
   handles.forEach(handle => {
     handle.addEventListener('mousedown', (e) => {
@@ -743,38 +682,31 @@ function initVCResize() {
       const startW = rect.width, startH = rect.height;
       const startL = rect.left, startT = rect.top;
       document.body.style.userSelect = 'none';
-
       function onMove(ev) {
         const dx = ev.clientX - startX;
         const dy = ev.clientY - startY;
         let w = startW, h = startH, l = startL, t = startT;
-
         if (dir.includes('e')) w = Math.max(480, startW + dx);
         if (dir.includes('w')) { w = Math.max(480, startW - dx); l = startL + (startW - w); }
         if (dir.includes('s')) h = Math.max(380, startH + dy);
         if (dir.includes('n')) { h = Math.max(380, startH - dy); t = startT + (startH - h); }
-
         win.style.width = w + 'px';
         win.style.height = h + 'px';
         win.style.left = l + 'px';
         win.style.top = t + 'px';
       }
-
       function onUp() {
         document.removeEventListener('mousemove', onMove);
         document.removeEventListener('mouseup', onUp);
         document.body.style.userSelect = '';
       }
-
       document.addEventListener('mousemove', onMove);
       document.addEventListener('mouseup', onUp);
     });
   });
 }
-
 function getMeds() { try { return JSON.parse(localStorage.getItem('hc_meds') || '[]'); } catch { return []; } }
 function saveMeds(meds) { localStorage.setItem('hc_meds', JSON.stringify(meds)); }
-
 function renderMedications() {
   const meds = getMeds();
   const list = document.getElementById('medsList');
@@ -808,7 +740,6 @@ function renderMedications() {
       : '<div class="text-center py-3" style="color:var(--text-secondary);font-size:0.85rem">No medications scheduled.</div>';
   }
 }
-
 function toggleMed(index) {
   const meds = getMeds(); meds[index].taken = !meds[index].taken; saveMeds(meds); renderMedications();
 }
@@ -822,7 +753,6 @@ function addMedication() {
   });
   new bootstrap.Modal(document.getElementById('addMedModal')).show();
 }
-
 function submitAddMedication() {
   const name     = document.getElementById('med-name')?.value.trim();
   const purpose  = document.getElementById('med-purpose')?.value.trim() || '';
@@ -835,7 +765,6 @@ function submitAddMedication() {
   bootstrap.Modal.getInstance(document.getElementById('addMedModal'))?.hide();
   showToast('Added ✅', `${name} added to your medication list.`);
 }
-
 async function renderDashDoctors(filterSpec) {
   const grid = document.getElementById('dashDoctorsGrid');
   if (!grid) return;
@@ -871,7 +800,6 @@ async function renderDashDoctors(filterSpec) {
     </div>`).join('');
 }
 function filterDoctors(spec) { renderDashDoctors(spec || undefined); }
-
 const DOCTOR_CONTACTS = [
   { name:'Dr. Priya Sharma', emoji:'👩‍⚕️', specialty:'General Medicine', online:true },
   { name:'Dr. Arjun Mehta',  emoji:'👨‍⚕️', specialty:'Cardiology',        online:true },
@@ -879,7 +807,6 @@ const DOCTOR_CONTACTS = [
 ];
 let activeChatIdx = 0;
 const chatHistories = { 0:[], 1:[], 2:[] };
-
 function initChat() {
   const contacts = document.getElementById('chatContacts');
   if (contacts) {
@@ -901,7 +828,6 @@ function initChat() {
   updateChatHeader(0);
   renderChatMessages(0);
 }
-
 function selectContact(el, index) {
   document.querySelectorAll('.chat-contact').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
@@ -910,7 +836,6 @@ function selectContact(el, index) {
   renderChatMessages(index);
   hideChatContacts();
 }
-
 function updateChatHeader(index) {
   const doc = DOCTOR_CONTACTS[index];
   const hdr = document.getElementById('chatHeader');
@@ -923,7 +848,6 @@ function updateChatHeader(index) {
     statEl.style.color = doc.online ? 'var(--success)' : 'var(--text-muted)';
   }
 }
-
 function renderChatMessages(index) {
   const el = document.getElementById('chatMessages');
   if (!el) return;
@@ -947,20 +871,16 @@ function renderChatMessages(index) {
     </div>`).join('');
   el.scrollTop = el.scrollHeight;
 }
-
 async function sendChatMsg() {
   const input = document.getElementById('chatInput');
   const text  = input?.value.trim();
   if (!text) return;
-
   const now = new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
   if (!chatHistories[activeChatIdx]) chatHistories[activeChatIdx] = [];
   chatHistories[activeChatIdx].push({ from:'user', text, time:now });
   input.value = '';
   renderChatMessages(activeChatIdx);
-
   apiCall('/chat/send', 'POST', { to: currentUser?._id || currentUser?.id || null, text }).catch(() => {});
-
   setTimeout(() => {
     const replies = [
       'Thank you for reaching out. I will review your message shortly.',
@@ -974,17 +894,14 @@ async function sendChatMsg() {
     renderChatMessages(activeChatIdx);
   }, 1500);
 }
-
 async function initReportsPage() {
   const ctx = document.getElementById('reportChart');
   if (!ctx) return;
   if (reportChartInst) { reportChartInst.destroy(); reportChartInst = null; }
-
   let heartData   = randArr(72, 12, 14);
   let spo2Data    = randArr(97, 2,  14);
   let glucoseData = randArr(95, 20, 14);
   let labels      = Array.from({ length: 14 }, (_, i) => `Day ${i+1}`);
-
   const res = await apiCall('/health/summary');
   if (res.success && res.data && res.data.length) {
     const data = res.data;
@@ -994,7 +911,6 @@ async function initReportsPage() {
     glucoseData = data.map(d => d.vitals?.bloodGlucose        || null);
     showToast('Reports', `Loaded ${data.length} real readings from your health record.`);
   }
-
   reportChartInst = new Chart(ctx, {
     type: 'line',
     data: {
@@ -1016,11 +932,9 @@ async function initReportsPage() {
   });
 }
 function openReport(type) { showToast('Report', `${type.charAt(0).toUpperCase()+type.slice(1)} report — PDF export coming soon.`); }
-
 function populateProfile(user) {
   const set    = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
   const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val || '—'; };
-
   set('pf-name',   user.fullName);
   set('pf-email',  user.email);
   set('pf-phone',  user.phone);
@@ -1045,7 +959,6 @@ function populateProfile(user) {
     if (yearEl) yearEl.textContent = new Date(user.createdAt).getFullYear();
   }
 }
-
 async function saveProfile() {
   const data = {
     fullName:   document.getElementById('pf-name')?.value.trim(),
@@ -1071,7 +984,6 @@ async function saveProfile() {
     showToast('Save Failed', res.message || 'Could not update profile.');
   }
 }
-
 function triggerSOS() {
   const modal = new bootstrap.Modal(document.getElementById('dashEmergencyModal'));
   modal.show();
@@ -1081,22 +993,17 @@ function triggerSOS() {
     { id:'des-3', html:'<i class="bi bi-check-circle text-success me-1"></i>On-Call Doctor: <strong class="text-success">Connected ✓</strong>' }
   ];
   steps.forEach((s, i) => setTimeout(() => { const el = document.getElementById(s.id); if (el) el.innerHTML = s.html; }, (i+1)*1500));
-
   const send = (loc) => apiCall('/emergency/alert','POST',{ type:'manual', severity:'critical', triggeredBy:'manual', location:loc||{} });
   navigator.geolocation?.getCurrentPosition(pos => send({ lat:pos.coords.latitude, lng:pos.coords.longitude }), () => send());
 }
-
 document.addEventListener('DOMContentLoaded', async () => {
   updateDateTime();
   setInterval(updateDateTime, 60000);
-
   initHRChart();
   initDashScore();
   renderVitalsLog();
-
   await loadCurrentUser();
   await loadOverviewAppointments();
-
   try {
     const socket = io('http://localhost:3000', { transports:['websocket','polling'] });
     socket.on('connect', () => {

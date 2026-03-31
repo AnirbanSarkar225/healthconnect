@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const emergencyAlertSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   type: {
@@ -21,5 +20,4 @@ const emergencyAlertSchema = new mongoose.Schema({
   status: { type: String, enum: ['active', 'responded', 'resolved', 'false-alarm'], default: 'active' },
   createdAt: { type: Date, default: Date.now }
 });
-
 module.exports = mongoose.model('EmergencyAlert', emergencyAlertSchema);

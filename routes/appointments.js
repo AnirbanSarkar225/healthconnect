@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-
 const auth = (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
@@ -12,9 +11,7 @@ const auth = (req, res, next) => {
     res.status(401).json({ success: false, message: 'Invalid or expired token' });
   }
 };
-
 const Appointment = require('../models/Appointment');
-
 const DOCTORS_LIST = [
   { id: 'd1', name: 'Dr. Priya Sharma', specialty: 'General Medicine', rating: 4.9, available: true, emoji: '👩‍⚕️', exp: '12 yrs' },
   { id: 'd2', name: 'Dr. Arjun Mehta', specialty: 'Cardiology', rating: 4.8, available: true, emoji: '👨‍⚕️', exp: '15 yrs' },
@@ -23,18 +20,15 @@ const DOCTORS_LIST = [
   { id: 'd5', name: 'Dr. Meera Nair', specialty: 'Pediatrics', rating: 4.8, available: true, emoji: '👩‍⚕️', exp: '8 yrs' },
   { id: 'd6', name: 'Dr. Rajesh Kumar', specialty: 'Dermatology', rating: 4.6, available: true, emoji: '👨‍⚕️', exp: '11 yrs' },
 ];
-
 router.get('/doctors', (req, res) => {
   res.json({ success: true, doctors: DOCTORS_LIST });
 });
-
 router.post('/', auth, async (req, res) => {
   try {
     const { specialty, type, scheduledAt, doctorName, symptoms } = req.body;
     if (!specialty || !scheduledAt) {
       return res.status(400).json({ success: false, message: 'specialty and scheduledAt are required' });
     }
-
     const appt = await Appointment.create({
       patient: req.user.id,
       specialty,
@@ -43,13 +37,11 @@ router.post('/', auth, async (req, res) => {
       doctorName: doctorName || 'Next available doctor',
       symptoms: symptoms || ''
     });
-
     res.status(201).json({ success: true, appointment: appt });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 });
-
 router.get('/', auth, async (req, res) => {
   try {
     const appts = await Appointment.find({ patient: req.user.id }).sort({ scheduledAt: -1 });
@@ -58,7 +50,6 @@ router.get('/', auth, async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
-
 router.put('/:id/cancel', auth, async (req, res) => {
   try {
     const appt = await Appointment.findOneAndUpdate(
@@ -72,5 +63,16 @@ router.put('/:id/cancel', auth, async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
-
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const appt = await Appointment.findOneAndDelete({
+      _id: req.params.id,
+      patient: req.user.id
+    });
+    if (!appt) return res.status(404).json({ success: false, message: 'Appointment not found' });
+    res.json({ success: true, message: 'Appointment removed' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
 module.exports = router;

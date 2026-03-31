@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const EmergencyAlert = require('../models/EmergencyAlert');
 const jwt = require('jsonwebtoken');
-
 const auth = (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
@@ -13,11 +12,9 @@ const auth = (req, res, next) => {
     res.status(401).json({ success: false, message: 'Invalid or expired token' });
   }
 };
-
 router.post('/alert', auth, async (req, res) => {
   try {
     const { type, severity, triggeredBy, location, vitalsAtAlert } = req.body;
-
     const alert = await EmergencyAlert.create({
       userId: req.user.id,
       type: type || 'manual',
@@ -27,9 +24,7 @@ router.post('/alert', auth, async (req, res) => {
       vitalsAtAlert: vitalsAtAlert || {},
       servicesNotified: ['ambulance', 'emergency_contact', 'on_call_doctor']
     });
-
     console.log(`🚨 EMERGENCY ALERT — userId: ${req.user.id}, type: ${alert.type}`);
-
     res.status(201).json({
       success: true,
       alert,
@@ -40,7 +35,6 @@ router.post('/alert', auth, async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
-
 router.get('/history', auth, async (req, res) => {
   try {
     const alerts = await EmergencyAlert.find({ userId: req.user.id })
@@ -51,7 +45,6 @@ router.get('/history', auth, async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
-
 router.put('/:id/resolve', auth, async (req, res) => {
   try {
     const alert = await EmergencyAlert.findOneAndUpdate(
@@ -65,5 +58,4 @@ router.put('/:id/resolve', auth, async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
-
 module.exports = router;

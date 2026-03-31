@@ -4,7 +4,6 @@ let demoInterval = null;
 let mainChartInstance = null;
 let scoreChartInstance = null;
 let heroChartInstance = null;
-
 function showModal(id) {
   new bootstrap.Modal(document.getElementById(id)).show();
 }
@@ -33,11 +32,9 @@ function showError(id, msg) {
 function hideError(id) {
   document.getElementById(id)?.classList.add('d-none');
 }
-
 window.addEventListener('scroll', () => {
   document.getElementById('mainNav')?.classList.toggle('scrolled', window.scrollY > 50);
 });
-
 async function apiCall(endpoint, method = 'GET', body = null) {
   const opts = {
     method,
@@ -54,23 +51,18 @@ async function apiCall(endpoint, method = 'GET', body = null) {
     return { success: false, message: 'Cannot reach server. Make sure the backend is running on port 3000.' };
   }
 }
-
 async function handleLogin() {
   hideError('loginError');
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
   if (!email || !password) return showError('loginError', 'Please fill in all fields.');
-
   const btn = document.getElementById('loginBtn');
   const spinner = document.getElementById('loginSpinner');
   btn.disabled = true;
   spinner.classList.remove('d-none');
-
   const res = await apiCall('/auth/login', 'POST', { email, password });
-
   btn.disabled = false;
   spinner.classList.add('d-none');
-
   if (res.success) {
     authToken = res.token;
     localStorage.setItem('hc_token', res.token);
@@ -83,11 +75,9 @@ async function handleLogin() {
     showError('loginError', res.message || 'Login failed.');
   }
 }
-
 async function handleRegister() {
   hideError('registerError');
   document.getElementById('registerSuccess').classList.add('d-none');
-
   const data = {
     fullName: document.getElementById('regName').value.trim(),
     email: document.getElementById('regEmail').value.trim(),
@@ -101,24 +91,19 @@ async function handleRegister() {
       relation: document.getElementById('regEmergRelation').value
     }
   };
-
   if (!data.fullName || !data.email || !data.phone || !data.password) {
     return showError('registerError', 'Full name, email, phone and password are required.');
   }
   if (data.password.length < 6) {
     return showError('registerError', 'Password must be at least 6 characters.');
   }
-
   const btn = document.getElementById('registerBtn');
   const spinner = document.getElementById('registerSpinner');
   btn.disabled = true;
   spinner.classList.remove('d-none');
-
   const res = await apiCall('/auth/register', 'POST', data);
-
   btn.disabled = false;
   spinner.classList.add('d-none');
-
   if (res.success) {
     authToken = res.token;
     localStorage.setItem('hc_token', res.token);
@@ -136,7 +121,6 @@ async function handleRegister() {
     showError('registerError', res.message || 'Registration failed.');
   }
 }
-
 function updateNavForLoggedIn(user) {
   const nav = document.querySelector('.navbar-nav.ms-auto');
   if (!nav) return;
@@ -161,14 +145,12 @@ function updateNavForLoggedIn(user) {
     </div>`;
   nav.appendChild(li);
 }
-
 function logout() {
   authToken = null;
   localStorage.removeItem('hc_token');
   localStorage.removeItem('hc_user');
   location.reload();
 }
-
 function goToDashboard() {
   if (authToken) {
     window.location.href = 'dashboard.html';
@@ -177,19 +159,15 @@ function goToDashboard() {
     showError('loginError', 'Please sign in to access your dashboard.');
   }
 }
-
 async function renderDoctors() {
   const grid = document.getElementById('doctorsGrid');
   if (!grid) return;
-
   const res = await apiCall('/appointments/doctors');
   const doctors = res.success ? res.doctors : [];
-
   if (!doctors.length) {
     grid.innerHTML = '<div class="col-12 text-center text-muted py-4">Unable to load doctors. Please ensure the server is running.</div>';
     return;
   }
-
   grid.innerHTML = doctors.map(doc => `
     <div class="col-md-6 col-lg-4">
       <div class="doctor-card h-100">
@@ -214,7 +192,6 @@ async function renderDoctors() {
       </div>
     </div>`).join('');
 }
-
 async function handleBooking() {
   const data = {
     specialty: document.getElementById('bookSpecialty').value,
@@ -223,16 +200,13 @@ async function handleBooking() {
     doctorName: document.getElementById('bookDoctor').value || 'Next available doctor',
     symptoms: document.getElementById('bookSymptoms').value
   };
-
   if (!data.scheduledAt) return showToast('Missing Info', 'Please select a date and time.');
-
   if (!authToken) {
     hideModal('bookingModal');
     setTimeout(() => showModal('loginModal'), 350);
     showToast('Sign In Required', 'Please sign in to book appointments.');
     return;
   }
-
   const res = await apiCall('/appointments', 'POST', data);
   if (res.success) {
     const el = document.getElementById('bookingSuccess');
@@ -244,21 +218,18 @@ async function handleBooking() {
     showToast('Booking Failed', res.message || 'Please try again.');
   }
 }
-
 function buildWeekLabels() {
   return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 }
 function randArr(base, variance, len) {
   return Array.from({ length: len }, () => +(base + (Math.random() - 0.5) * variance * 2).toFixed(1));
 }
-
 const chartColors = { heart: '#ff4757', spo2: '#1e90ff', glucose: '#a855f7' };
 const chartDatasets = {
   heart: randArr(72, 8, 7),
   spo2: randArr(97, 2, 7),
   glucose: randArr(95, 15, 7)
 };
-
 function initMainChart(type = 'heart') {
   const ctx = document.getElementById('mainChart');
   if (!ctx) return;
@@ -288,13 +259,11 @@ function initMainChart(type = 'heart') {
     }
   });
 }
-
 function switchChart(type, btn) {
   document.querySelectorAll('.btn-group .btn-outline-secondary').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
   initMainChart(type);
 }
-
 function initScoreChart() {
   const ctx = document.getElementById('scoreChart');
   if (!ctx) return;
@@ -312,7 +281,6 @@ function initScoreChart() {
     options: { plugins: { legend: { display: false }, tooltip: { enabled: false } }, animation: { duration: 1500 } }
   });
 }
-
 function initHeroChart() {
   const ctx = document.getElementById('heroChart');
   if (!ctx) return;
@@ -336,7 +304,6 @@ function initHeroChart() {
     }
   });
 }
-
 const vitalCfg = {
   heart:   { base: 72,   variance: 8,   decimal: 0, id: 'v-heart',   sid: 'vs-heart',   card: 'vc-heart'   },
   spo2:    { base: 98,   variance: 2,   decimal: 0, id: 'v-spo2',    sid: 'vs-spo2',    card: 'vc-spo2'    },
@@ -344,7 +311,6 @@ const vitalCfg = {
   glucose: { base: 95,   variance: 10,  decimal: 0, id: 'v-glucose', sid: 'vs-glucose', card: 'vc-glucose' },
   resp:    { base: 16,   variance: 3,   decimal: 0, id: 'v-resp',    sid: 'vs-resp',    card: 'vc-resp'    }
 };
-
 function vitalStatus(key, val) {
   const normal  = { heart:[60,100], spo2:[95,100], temp:[36,37.5], glucose:[70,140], resp:[12,20] };
   const warning = { heart:[40,140], spo2:[90,100], temp:[35,40],   glucose:[50,400], resp:[8,30]  };
@@ -354,7 +320,6 @@ function vitalStatus(key, val) {
   if (val >= wL && val <= wH) return 'warning';
   return 'critical';
 }
-
 function updateVitals() {
   Object.entries(vitalCfg).forEach(([key, cfg]) => {
     const val = +(cfg.base + (Math.random() - 0.5) * cfg.variance * 2).toFixed(cfg.decimal);
@@ -371,7 +336,6 @@ function updateVitals() {
   const bpEl  = document.getElementById('v-bp');
   if (bpEl) bpEl.textContent = `${bpSys}/${bpDia}`;
 }
-
 function startDemo() {
   if (demoInterval) {
     clearInterval(demoInterval);
@@ -383,9 +347,7 @@ function startDemo() {
   demoInterval = setInterval(updateVitals, 2500);
   showToast('Live Demo Active', 'Vitals updating every 2.5 seconds.');
 }
-
 let sosTimer = null;
-
 function triggerSOS() {
   const btn = document.getElementById('sosBtn');
   if (!btn) return;
@@ -395,14 +357,12 @@ function triggerSOS() {
     triggerEmergency();
   }, 3000);
 }
-
 document.addEventListener('mouseup',  cancelSOS);
 document.addEventListener('touchend', cancelSOS);
 function cancelSOS() {
   if (sosTimer) { clearTimeout(sosTimer); sosTimer = null; }
   document.getElementById('sosBtn')?.classList.remove('activated');
 }
-
 function triggerEmergency() {
   showModal('emergencyModal');
   const steps = [
@@ -413,7 +373,6 @@ function triggerEmergency() {
   steps.forEach((s, i) => {
     setTimeout(() => { const el = document.getElementById(s.id); if (el) el.innerHTML = s.html; }, (i + 1) * 1500);
   });
-
   if (authToken) {
     const send = (loc) => apiCall('/emergency/alert', 'POST', { type: 'manual', severity: 'critical', triggeredBy: 'manual', location: loc || {} });
     navigator.geolocation?.getCurrentPosition(
@@ -422,18 +381,14 @@ function triggerEmergency() {
     );
   }
 }
-
 function triggerEmergencyTest() { triggerEmergency(); }
-
 document.addEventListener('DOMContentLoaded', () => {
   renderDoctors();
   initMainChart('heart');
   initScoreChart();
   initHeroChart();
-
   const dtInput = document.getElementById('bookDateTime');
   if (dtInput) dtInput.value = new Date(Date.now() + 3600000).toISOString().slice(0, 16);
-
   if (authToken) {
     apiCall('/auth/me').then(res => {
       if (res.success) {
@@ -446,7 +401,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
   const params = new URLSearchParams(window.location.search);
   if (params.get('require_login') || params.get('session_expired')) {
     const msg = params.get('session_expired') ? 'Your session has expired. Please sign in again.' : 'Please sign in to access the dashboard.';
@@ -456,7 +410,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 400);
     window.history.replaceState({}, document.title, window.location.pathname);
   }
-
   try {
     const socket = io('http://localhost:3000', { transports: ['websocket', 'polling'] });
     socket.on('connect', () => console.log('🔌 Socket connected to backend'));
@@ -465,7 +418,6 @@ document.addEventListener('DOMContentLoaded', () => {
   } catch (e) {
     console.warn('Socket.IO unavailable:', e.message);
   }
-
   const observer = new IntersectionObserver(entries => {
     entries.forEach(e => { if (e.isIntersecting) e.target.style.opacity = '1'; });
   }, { threshold: 0.1 });
