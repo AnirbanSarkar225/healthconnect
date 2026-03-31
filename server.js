@@ -6,6 +6,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 const path = require('path');
 const connectDB = require('./config/database');
+const Appointment = require('./models/Appointment');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -15,7 +16,26 @@ const io = new Server(server, {
     credentials: true
   }
 });
-connectDB();
+connectDB().then(async () => {
+  try {
+    const result = await Appointment.deleteMany({ status: 'cancelled' });
+    if (result.deletedCount > 0) {
+      console.log(`🧹 Startup cleanup: removed ${result.deletedCount} cancelled appointment(s)`);
+    }
+  } catch (err) {
+    console.warn('Cleanup error:', err.message);
+  }
+});
+setInterval(async () => {
+  try {
+    const result = await Appointment.deleteMany({ status: 'cancelled' });
+    if (result.deletedCount > 0) {
+      console.log(`🧹 Auto-cleanup: removed ${result.deletedCount} cancelled appointment(s)`);
+    }
+  } catch (err) {
+    console.warn('Cleanup error:', err.message);
+  }
+}, 5 * 60 * 1000);
 app.use(cors({
   origin: ['http://localhost:5500', 'http://127.0.0.1:5500', 'http://localhost:3000'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
