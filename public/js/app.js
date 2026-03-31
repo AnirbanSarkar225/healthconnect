@@ -87,6 +87,8 @@ async function handleLogin() {
     hideModal('loginModal');
     showToast('Welcome back!', `Hello, ${res.user.fullName} 👋`);
     updateNavForLoggedIn(res.user);
+    // Redirect to dashboard after short delay
+    setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
   } else {
     showError('loginError', res.message || 'Login failed.');
   }
@@ -138,6 +140,7 @@ async function handleRegister() {
       hideModal('registerModal');
       updateNavForLoggedIn(res.user);
       showToast('Account Created!', 'Your health profile is ready.');
+      setTimeout(() => { window.location.href = 'dashboard.html'; }, 600);
     }, 1200);
   } else {
     showError('registerError', res.message || 'Registration failed.');
@@ -175,6 +178,15 @@ function logout() {
   localStorage.removeItem('hc_token');
   localStorage.removeItem('hc_user');
   location.reload();
+}
+
+function goToDashboard() {
+  if (authToken) {
+    window.location.href = 'dashboard.html';
+  } else {
+    showModal('loginModal');
+    showError('loginError', 'Please sign in to access your dashboard.');
+  }
 }
 
 // ─── Doctors Grid ─────────────────────────────────
@@ -453,6 +465,18 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem('hc_user');
       }
     });
+  }
+
+  // Show login modal if redirected from dashboard
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('require_login') || params.get('session_expired')) {
+    const msg = params.get('session_expired') ? 'Your session has expired. Please sign in again.' : 'Please sign in to access the dashboard.';
+    setTimeout(() => {
+      showModal('loginModal');
+      showError('loginError', msg);
+    }, 400);
+    // Clean URL
+    window.history.replaceState({}, document.title, window.location.pathname);
   }
 
   // Socket.IO — connect to backend port 3000

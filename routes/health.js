@@ -9,7 +9,7 @@ const auth = (req, res, next) => {
     if (!token) return res.status(401).json({ success: false, message: 'No token provided' });
     req.user = jwt.verify(token, process.env.JWT_SECRET || 'healthconnect_secret');
     next();
-  } catch {
+  } catch (err) {
     res.status(401).json({ success: false, message: 'Invalid or expired token' });
   }
 };
