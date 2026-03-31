@@ -460,17 +460,43 @@ async function submitDashBooking() {
   }
 }
 
+let callTimerInterval = null;
+let callSeconds = 0;
+let callChatMessages = [];
+let vcChatOpen = false;
+let vcIsMaximized = false;
+let vcIsMinimized = false;
+
 async function openVideoCall(appointmentId, doctorName) {
-  const modal = new bootstrap.Modal(document.getElementById('videoCallModal'));
-  modal.show();
+  const win = document.getElementById('videoCallWindow');
+  win.style.display = 'flex';
+  win.classList.remove('vc-maximized', 'vc-minimized');
+  win.style.top = '50%';
+  win.style.left = '50%';
+  win.style.transform = 'translate(-50%, -50%)';
+  win.style.width = '820px';
+  win.style.height = '580px';
+  vcIsMaximized = false;
+  vcIsMinimized = false;
 
   const doctorNameEl = document.getElementById('videoCallDoctorName');
   if (doctorNameEl) doctorNameEl.textContent = `Video Call — ${doctorName}`;
 
-  const localVideo  = document.getElementById('localVideo');
-  const statusEl    = document.getElementById('videoStatus');
+  const localVideo = document.getElementById('localVideo');
+  const statusEl = document.getElementById('videoStatus');
 
   if (statusEl) statusEl.textContent = 'Accessing camera and microphone...';
+
+  callChatMessages = [];
+  renderCallChat();
+
+  const chatPanel = document.getElementById('vcChatPanel');
+  if (chatPanel) chatPanel.classList.remove('open');
+  vcChatOpen = false;
+  const chatToggle = document.getElementById('btnToggleChat');
+  if (chatToggle) chatToggle.classList.remove('active');
+
+  startCallTimer();
 
   try {
     localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -493,6 +519,27 @@ async function openVideoCall(appointmentId, doctorName) {
     if (statusEl) statusEl.textContent = `Camera error: ${err.message}. Check browser permissions.`;
     showToast('Camera Error', 'Please allow camera/microphone access in your browser.');
   }
+
+  initVCDrag();
+  initVCResize();
+}
+
+function startCallTimer() {
+  callSeconds = 0;
+  const el = document.getElementById('vcCallTimer');
+  if (el) el.textContent = '00:00';
+  if (callTimerInterval) clearInterval(callTimerInterval);
+  callTimerInterval = setInterval(() => {
+    callSeconds++;
+    const m = String(Math.floor(callSeconds / 60)).padStart(2, '0');
+    const s = String(callSeconds % 60).padStart(2, '0');
+    const el = document.getElementById('vcCallTimer');
+    if (el) el.textContent = `${m}:${s}`;
+  }, 1000);
+}
+
+function stopCallTimer() {
+  if (callTimerInterval) { clearInterval(callTimerInterval); callTimerInterval = null; }
 }
 
 function toggleCamera() {
@@ -537,15 +584,193 @@ function stopCamera() {
 
 function endCall() {
   stopCamera();
-  const modal = bootstrap.Modal.getInstance(document.getElementById('videoCallModal'));
-  if (modal) modal.hide();
+  stopCallTimer();
+  const win = document.getElementById('videoCallWindow');
+  if (win) win.style.display = 'none';
   showToast('Call Ended', 'Video consultation has ended.');
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  const vcModal = document.getElementById('videoCallModal');
-  if (vcModal) vcModal.addEventListener('hidden.bs.modal', () => stopCamera());
-});
+function toggleMinimizeCall() {
+  const win = document.getElementById('videoCallWindow');
+  if (!win) return;
+  if (vcIsMinimized) {
+    win.classList.remove('vc-minimized');
+    vcIsMinimized = false;
+  } else {
+    win.classList.remove('vc-maximized');
+    vcIsMaximized = false;
+    win.classList.add('vc-minimized');
+    vcIsMinimized = true;
+  }
+}
+
+function toggleMaximizeCall() {
+  const win = document.getElementById('videoCallWindow');
+  if (!win) return;
+  if (vcIsMaximized) {
+    win.classList.remove('vc-maximized');
+    vcIsMaximized = false;
+  } else {
+    win.classList.remove('vc-minimized');
+    vcIsMinimized = false;
+    win.classList.add('vc-maximized');
+    vcIsMaximized = true;
+  }
+}
+
+function toggleCallChat() {
+  const panel = document.getElementById('vcChatPanel');
+  const btn = document.getElementById('btnToggleChat');
+  if (!panel) return;
+  vcChatOpen = !vcChatOpen;
+  panel.classList.toggle('open', vcChatOpen);
+  if (btn) btn.classList.toggle('active', vcChatOpen);
+  if (vcChatOpen) {
+    const badge = document.getElementById('vcChatBadge');
+    if (badge) { badge.classList.add('d-none'); badge.textContent = '0'; }
+    setTimeout(() => {
+      const input = document.getElementById('vcChatInput');
+      if (input) input.focus();
+    }, 350);
+  }
+}
+
+function renderCallChat() {
+  const el = document.getElementById('vcChatMessages');
+  if (!el) return;
+  if (!callChatMessages.length) {
+    el.innerHTML = `<div class="vc-chat-empty">
+      <i class="bi bi-chat-square-text"></i>
+      <span>Send a message to the doctor during your consultation</span>
+    </div>`;
+    return;
+  }
+  el.innerHTML = callChatMessages.map(m => `
+    <div class="vc-chat-msg ${m.from === 'user' ? 'sent' : 'received'}">
+      <div>${m.text}</div>
+      <div class="vc-chat-msg-time">${m.time}</div>
+    </div>`).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+function sendCallChatMsg() {
+  const input = document.getElementById('vcChatInput');
+  const text = input?.value.trim();
+  if (!text) return;
+  const now = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  callChatMessages.push({ from: 'user', text, time: now });
+  input.value = '';
+  renderCallChat();
+
+  setTimeout(() => {
+    const replies = [
+      'Noted, I can see that in your records.',
+      'Thank you for the information.',
+      'Let me check that for you.',
+      'Please continue, I\'m listening.',
+      'That\'s helpful context for the consultation.',
+      'I\'ll include this in my assessment.'
+    ];
+    const replyTime = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+    callChatMessages.push({ from: 'doctor', text: replies[Math.floor(Math.random() * replies.length)], time: replyTime });
+    renderCallChat();
+    if (!vcChatOpen) {
+      const badge = document.getElementById('vcChatBadge');
+      if (badge) {
+        const count = parseInt(badge.textContent || '0') + 1;
+        badge.textContent = String(count);
+        badge.classList.remove('d-none');
+      }
+    }
+  }, 1500);
+}
+
+function initVCDrag() {
+  const win = document.getElementById('videoCallWindow');
+  const titlebar = document.getElementById('vcTitlebar');
+  if (!win || !titlebar) return;
+
+  let isDragging = false, offsetX = 0, offsetY = 0;
+
+  titlebar.addEventListener('mousedown', (e) => {
+    if (e.target.closest('.vc-title-actions') || vcIsMaximized) return;
+    isDragging = true;
+    const rect = win.getBoundingClientRect();
+    win.style.transform = 'none';
+    win.style.left = rect.left + 'px';
+    win.style.top = rect.top + 'px';
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+    document.body.style.userSelect = 'none';
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    let newLeft = e.clientX - offsetX;
+    let newTop = e.clientY - offsetY;
+    newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - 100));
+    newTop = Math.max(0, Math.min(newTop, window.innerHeight - 48));
+    win.style.left = newLeft + 'px';
+    win.style.top = newTop + 'px';
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (isDragging) {
+      isDragging = false;
+      document.body.style.userSelect = '';
+    }
+  });
+}
+
+function initVCResize() {
+  const win = document.getElementById('videoCallWindow');
+  if (!win) return;
+
+  const handles = win.querySelectorAll('.vc-resize-handle');
+  handles.forEach(handle => {
+    handle.addEventListener('mousedown', (e) => {
+      if (vcIsMaximized || vcIsMinimized) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const dir = handle.dataset.dir;
+      const rect = win.getBoundingClientRect();
+      win.style.transform = 'none';
+      win.style.left = rect.left + 'px';
+      win.style.top = rect.top + 'px';
+      win.style.width = rect.width + 'px';
+      win.style.height = rect.height + 'px';
+      const startX = e.clientX, startY = e.clientY;
+      const startW = rect.width, startH = rect.height;
+      const startL = rect.left, startT = rect.top;
+      document.body.style.userSelect = 'none';
+
+      function onMove(ev) {
+        const dx = ev.clientX - startX;
+        const dy = ev.clientY - startY;
+        let w = startW, h = startH, l = startL, t = startT;
+
+        if (dir.includes('e')) w = Math.max(480, startW + dx);
+        if (dir.includes('w')) { w = Math.max(480, startW - dx); l = startL + (startW - w); }
+        if (dir.includes('s')) h = Math.max(380, startH + dy);
+        if (dir.includes('n')) { h = Math.max(380, startH - dy); t = startT + (startH - h); }
+
+        win.style.width = w + 'px';
+        win.style.height = h + 'px';
+        win.style.left = l + 'px';
+        win.style.top = t + 'px';
+      }
+
+      function onUp() {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        document.body.style.userSelect = '';
+      }
+
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+  });
+}
 
 function getMeds() { try { return JSON.parse(localStorage.getItem('hc_meds') || '[]'); } catch { return []; } }
 function saveMeds(meds) { localStorage.setItem('hc_meds', JSON.stringify(meds)); }
