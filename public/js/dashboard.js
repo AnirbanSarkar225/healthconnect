@@ -381,9 +381,9 @@ async function loadAppointmentsPage() {
 async function cancelAppointment(id, btn) {
   showConfirm('Cancel this appointment?', async () => {
     btn.disabled = true;
-    const res = await apiCall(`/appointments/${id}/cancel`, 'PUT');
+    const res = await apiCall(`/appointments/${id}`, 'DELETE');
     if (res.success) {
-      showToast('Cancelled', 'Appointment cancelled.');
+      showToast('Cancelled', 'Appointment cancelled and removed.');
       const page = document.getElementById('page-appointments');
       if (page && !page.classList.contains('d-none')) loadAppointmentsPage();
       else loadOverviewAppointments();
