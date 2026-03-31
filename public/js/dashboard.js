@@ -27,6 +27,25 @@ let micEnabled   = true;
 })();
 
 // ─── Utilities ───────────────────────────────────
+
+// Custom confirm dialog — replaces browser confirm()
+function showConfirm(message, onConfirm) {
+  const textEl = document.getElementById('confirmModalText');
+  const okBtn  = document.getElementById('confirmModalOk');
+  if (textEl) textEl.textContent = message;
+  const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+  const handler = () => {
+    modal.hide();
+    okBtn.removeEventListener('click', handler);
+    onConfirm();
+  };
+  // Clean up any old handlers
+  const freshBtn = okBtn.cloneNode(true);
+  okBtn.parentNode.replaceChild(freshBtn, okBtn);
+  freshBtn.addEventListener('click', handler);
+  modal.show();
+}
+
 function showToast(title, body) {
   const titleEl = document.getElementById('dashToastTitle');
   const bodyEl  = document.getElementById('dashToastBody');
@@ -43,7 +62,27 @@ function showBookingModal() {
 }
 
 function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('open');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  sidebar.classList.toggle('open');
+  if (overlay) overlay.classList.toggle('active', sidebar.classList.contains('open'));
+}
+function closeSidebar() {
+  document.getElementById('sidebar')?.classList.remove('open');
+  document.getElementById('sidebarOverlay')?.classList.remove('active');
+}
+// Mobile chat: toggle between contacts and conversation
+function showChatContacts() {
+  const sidebar = document.querySelector('.chat-sidebar');
+  const main = document.querySelector('.chat-main');
+  if (sidebar) sidebar.classList.add('mobile-visible');
+  if (main) main.classList.add('mobile-hidden');
+}
+function hideChatContacts() {
+  const sidebar = document.querySelector('.chat-sidebar');
+  const main = document.querySelector('.chat-main');
+  if (sidebar) sidebar.classList.remove('mobile-visible');
+  if (main) main.classList.remove('mobile-hidden');
 }
 
 // ─── API helper ──────────────────────────────────
@@ -410,18 +449,19 @@ async function loadAppointmentsPage() {
 }
 
 async function cancelAppointment(id, btn) {
-  if (!confirm('Cancel this appointment?')) return;
-  btn.disabled = true;
-  const res = await apiCall(`/appointments/${id}/cancel`, 'PUT');
-  if (res.success) {
-    showToast('Cancelled', 'Appointment cancelled.');
-    const page = document.getElementById('page-appointments');
-    if (page && !page.classList.contains('d-none')) loadAppointmentsPage();
-    else loadOverviewAppointments();
-  } else {
-    showToast('Error', res.message || 'Could not cancel.');
-    btn.disabled = false;
-  }
+  showConfirm('Cancel this appointment?', async () => {
+    btn.disabled = true;
+    const res = await apiCall(`/appointments/${id}/cancel`, 'PUT');
+    if (res.success) {
+      showToast('Cancelled', 'Appointment cancelled.');
+      const page = document.getElementById('page-appointments');
+      if (page && !page.classList.contains('d-none')) loadAppointmentsPage();
+      else loadOverviewAppointments();
+    } else {
+      showToast('Error', res.message || 'Could not cancel.');
+      btn.disabled = false;
+    }
+  });
 }
 
 async function submitDashBooking() {
@@ -588,15 +628,24 @@ function deleteMed(index) {
   showToast('Removed', 'Medication removed.');
 }
 function addMedication() {
-  const name = prompt('Medication name (e.g. Metformin 500mg):');
-  if (!name?.trim()) return;
-  const purpose  = prompt('Purpose (e.g. Blood Sugar Control):') || '';
-  const schedule = prompt('Schedule (e.g. Twice daily — morning, night):') || '';
+  // Clear fields
+  ['med-name', 'med-purpose', 'med-schedule'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  new bootstrap.Modal(document.getElementById('addMedModal')).show();
+}
+
+function submitAddMedication() {
+  const name     = document.getElementById('med-name')?.value.trim();
+  const purpose  = document.getElementById('med-purpose')?.value.trim() || '';
+  const schedule = document.getElementById('med-schedule')?.value.trim() || '';
+  if (!name) { showToast('Required', 'Please enter the medication name.'); return; }
   const meds = getMeds();
-  meds.push({ name: name.trim(), purpose, schedule, taken: false });
+  meds.push({ name, purpose, schedule, taken: false });
   saveMeds(meds);
   renderMedications();
-  showToast('Added', `${name} added to your medication list.`);
+  bootstrap.Modal.getInstance(document.getElementById('addMedModal'))?.hide();
+  showToast('Added ✅', `${name} added to your medication list.`);
 }
 
 // ─── Doctors — fetched from backend ──────────────
@@ -673,6 +722,7 @@ function selectContact(el, index) {
   activeChatIdx = index;
   updateChatHeader(index);
   renderChatMessages(index);
+  hideChatContacts(); // on mobile, switch to conversation view
 }
 
 function updateChatHeader(index) {
@@ -723,8 +773,8 @@ async function sendChatMsg() {
   input.value = '';
   renderChatMessages(activeChatIdx);
 
-  // Save to backend (to=null since doctors are not real users yet — saved as patient-only message)
-  apiCall('/chat/send', 'POST', { to: '000000000000000000000000', text }).catch(() => {});
+  // Save to backend — silently skipped if no valid recipient (doctors are not real DB users yet)
+  apiCall('/chat/send', 'POST', { to: currentUser?._id || currentUser?.id || null, text }).catch(() => {});
 
   // Doctor auto-reply
   setTimeout(() => {

@@ -62,6 +62,9 @@
   </div>
 </aside>
 
+<!-- Sidebar Overlay (mobile backdrop) -->
+<div id="sidebarOverlay" onclick="closeSidebar()" style="display:none"></div>
+
 <!-- ── Main Content ── -->
 <main class="dashboard-main" id="dashMain">
 
@@ -483,6 +486,7 @@
         </div>
         <div class="chat-main">
           <div class="chat-header-bar" id="chatHeader">
+            <button class="btn btn-xs btn-ghost d-lg-none me-2" onclick="showChatContacts()" title="Back to contacts"><i class="bi bi-arrow-left"></i></button>
             <div class="doctor-avatar">👩‍⚕️</div>
             <div>
               <div class="fw-600">Dr. Priya Sharma</div>
