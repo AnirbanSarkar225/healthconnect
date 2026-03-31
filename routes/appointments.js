@@ -24,12 +24,10 @@ const DOCTORS_LIST = [
   { id: 'd6', name: 'Dr. Rajesh Kumar', specialty: 'Dermatology', rating: 4.6, available: true, emoji: '👨‍⚕️', exp: '11 yrs' },
 ];
 
-// GET /api/appointments/doctors — public
 router.get('/doctors', (req, res) => {
   res.json({ success: true, doctors: DOCTORS_LIST });
 });
 
-// POST /api/appointments — book
 router.post('/', auth, async (req, res) => {
   try {
     const { specialty, type, scheduledAt, doctorName, symptoms } = req.body;
@@ -52,7 +50,6 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-// GET /api/appointments — get all for user
 router.get('/', auth, async (req, res) => {
   try {
     const appts = await Appointment.find({ patient: req.user.id }).sort({ scheduledAt: -1 });
@@ -62,7 +59,6 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-// PUT /api/appointments/:id/cancel
 router.put('/:id/cancel', auth, async (req, res) => {
   try {
     const appt = await Appointment.findOneAndUpdate(

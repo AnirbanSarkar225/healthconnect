@@ -12,7 +12,6 @@ const auth = (req, res, next) => {
   } catch { res.status(401).json({ success: false, message: 'Invalid token' }); }
 };
 
-// Simple message schema inline
 const msgSchema = new mongoose.Schema({
   from: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   to: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
@@ -23,7 +22,6 @@ const msgSchema = new mongoose.Schema({
 });
 const Message = mongoose.models.Message || mongoose.model('Message', msgSchema);
 
-// POST /api/chat/send
 router.post('/send', auth, async (req, res) => {
   try {
     const { to, text } = req.body;
@@ -37,7 +35,6 @@ router.post('/send', auth, async (req, res) => {
   }
 });
 
-// GET /api/chat/messages/:userId
 router.get('/messages/:userId', auth, async (req, res) => {
   try {
     const msgs = await Message.find({
@@ -52,7 +49,6 @@ router.get('/messages/:userId', auth, async (req, res) => {
   }
 });
 
-// GET /api/chat/conversations
 router.get('/conversations', auth, async (req, res) => {
   try {
     const msgs = await Message.find({

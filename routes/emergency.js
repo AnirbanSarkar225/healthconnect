@@ -14,7 +14,6 @@ const auth = (req, res, next) => {
   }
 };
 
-// POST /api/emergency/alert
 router.post('/alert', auth, async (req, res) => {
   try {
     const { type, severity, triggeredBy, location, vitalsAtAlert } = req.body;
@@ -42,7 +41,6 @@ router.post('/alert', auth, async (req, res) => {
   }
 });
 
-// GET /api/emergency/history
 router.get('/history', auth, async (req, res) => {
   try {
     const alerts = await EmergencyAlert.find({ userId: req.user.id })
@@ -54,7 +52,6 @@ router.get('/history', auth, async (req, res) => {
   }
 });
 
-// PUT /api/emergency/:id/resolve
 router.put('/:id/resolve', auth, async (req, res) => {
   try {
     const alert = await EmergencyAlert.findOneAndUpdate(

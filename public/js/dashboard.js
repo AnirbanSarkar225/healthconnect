@@ -1,11 +1,3 @@
-/* ═══════════════════════════════════════════════════
-   HEALTH CONNECT — DASHBOARD.JS
-   - Auth guard: redirects to index.html if not logged in
-   - All data fetched from real backend (port 3000)
-   - Video call opens real camera via getUserMedia
-   - Chat saved to backend via /api/chat/send
-   - No hardcoded demo user data
-═══════════════════════════════════════════════════ */
 
 const API = 'http://localhost:3000/api';
 let authToken   = localStorage.getItem('hc_token') || null;
@@ -13,22 +5,17 @@ let currentUser = null;
 let liveInterval = null;
 let hrChart = null, dashScore = null, reportChartInst = null, liveHrC = null, liveSpo2C = null;
 
-// ── Video call state ──────────────────────────────
 let localStream  = null;
 let camEnabled   = true;
 let micEnabled   = true;
 
-// ─── Auth Guard — runs before anything else ───────
 (function authGuard() {
   if (!authToken) {
-    // Not logged in → send back to home page
     window.location.href = 'index.html?require_login=1';
   }
 })();
 
-// ─── Utilities ───────────────────────────────────
 
-// Custom confirm dialog — replaces browser confirm()
 function showConfirm(message, onConfirm) {
   const textEl = document.getElementById('confirmModalText');
   const okBtn  = document.getElementById('confirmModalOk');
@@ -39,7 +26,6 @@ function showConfirm(message, onConfirm) {
     okBtn.removeEventListener('click', handler);
     onConfirm();
   };
-  // Clean up any old handlers
   const freshBtn = okBtn.cloneNode(true);
   okBtn.parentNode.replaceChild(freshBtn, okBtn);
   freshBtn.addEventListener('click', handler);
@@ -65,13 +51,15 @@ function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('sidebarOverlay');
   sidebar.classList.toggle('open');
-  if (overlay) overlay.classList.toggle('active', sidebar.classList.contains('open'));
+  if (overlay) {
+    if (sidebar.classList.contains('open')) overlay.classList.add('active');
+    else overlay.classList.remove('active');
+  }
 }
 function closeSidebar() {
   document.getElementById('sidebar')?.classList.remove('open');
   document.getElementById('sidebarOverlay')?.classList.remove('active');
 }
-// Mobile chat: toggle between contacts and conversation
 function showChatContacts() {
   const sidebar = document.querySelector('.chat-sidebar');
   const main = document.querySelector('.chat-main');
@@ -85,7 +73,6 @@ function hideChatContacts() {
   if (main) main.classList.remove('mobile-hidden');
 }
 
-// ─── API helper ──────────────────────────────────
 async function apiCall(endpoint, method = 'GET', body = null) {
   const opts = {
     method,
@@ -103,7 +90,6 @@ async function apiCall(endpoint, method = 'GET', body = null) {
   }
 }
 
-// ─── Date/Time ───────────────────────────────────
 function updateDateTime() {
   const now   = new Date();
   const hour  = now.getHours();
@@ -117,7 +103,6 @@ function updateDateTime() {
     ' · ' + now.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
 }
 
-// ─── Load current user from backend ──────────────
 async function loadCurrentUser() {
   const res = await apiCall('/auth/me');
   if (res.success) {
@@ -125,21 +110,17 @@ async function loadCurrentUser() {
     localStorage.setItem('hc_name', res.user.fullName.split(' ')[0]);
     updateDateTime();
     populateProfile(res.user);
-    // Update topbar avatar dropdown name
     const nameSpan = document.getElementById('topbarUserName');
     if (nameSpan) nameSpan.textContent = res.user.fullName.split(' ')[0];
-    // Update sidebar if user name shown
     const sidebarName = document.getElementById('sidebarUserName');
     if (sidebarName) sidebarName.textContent = res.user.fullName;
   } else {
-    // Token expired or invalid
     localStorage.removeItem('hc_token');
     localStorage.removeItem('hc_user');
     window.location.href = 'index.html?session_expired=1';
   }
 }
 
-// ─── Logout ──────────────────────────────────────
 function logout() {
   stopLiveMonitoring();
   stopCamera();
@@ -149,7 +130,6 @@ function logout() {
   window.location.href = 'index.html';
 }
 
-// ─── Page Navigation ─────────────────────────────
 const PAGES = ['overview','vitals','appointments','reports','medications','doctors','chat','profile','settings'];
 
 function loadPage(page) {
@@ -161,7 +141,6 @@ function loadPage(page) {
   const activeLink = document.querySelector(`.sidebar-link[onclick*="${page}"]`);
   if (activeLink) activeLink.classList.add('active');
 
-  // Page-specific initialisation
   if (page === 'overview')     loadOverviewAppointments();
   if (page === 'vitals')       initVitalsPage();
   if (page === 'appointments') loadAppointmentsPage();
@@ -174,7 +153,6 @@ function loadPage(page) {
   document.getElementById('sidebar').classList.remove('open');
 }
 
-// ─── Charts ──────────────────────────────────────
 function randArr(base, variance, len) {
   return Array.from({ length: len }, () => Math.round(base + (Math.random() - 0.5) * variance * 2));
 }
@@ -227,7 +205,6 @@ function setChartRange(range, btn) {
   hrChart.update();
 }
 
-// ─── Vitals Page ─────────────────────────────────
 function initVitalsPage() {
   const ctx1 = document.getElementById('liveHrChart');
   const ctx2 = document.getElementById('liveSpo2Chart');
@@ -268,13 +245,11 @@ function startLiveMonitoring() {
     const bps = Math.round(110 + Math.random() * 25);
     const bpd = Math.round(70  + Math.random() * 20);
 
-    // Update vitals page displays
     ['heart','spo2','temp','glucose','resp'].forEach(k => {
       const el = document.getElementById(`lv-${k}`); if (el) el.textContent = v[k];
     });
     const bpEl = document.getElementById('lv-bp'); if (bpEl) bpEl.textContent = `${bps}/${bpd}`;
 
-    // Update overview stat widgets
     ['sw-heart','sw-spo2','sw-temp','sw-bp'].forEach(id => {
       const el = document.getElementById(id);
       if (!el) return;
@@ -284,7 +259,6 @@ function startLiveMonitoring() {
       if (id === 'sw-bp')    el.textContent = `${bps}/${bpd}`;
     });
 
-    // Push HR to live chart
     if (liveHrC) {
       liveHrC.data.datasets[0].data.push(v.heart);
       liveHrC.data.datasets[0].data.shift();
@@ -293,13 +267,11 @@ function startLiveMonitoring() {
 
     addVitalsLogEntry(v.heart, v.spo2);
 
-    // Save to real backend
     const res = await apiCall('/health/vitals', 'POST', {
       vitals: { heartRate:v.heart, oxygenSaturation:v.spo2, temperature:v.temp, bloodGlucose:v.glucose, respiratoryRate:v.resp, bloodPressureSystolic:bps, bloodPressureDiastolic:bpd }
     });
     if (!res.success) console.warn('Vitals save failed:', res.message);
 
-    // Warn if abnormal
     if (v.heart > 100 || v.spo2 < 96) {
       const banner = document.getElementById('alertBanner');
       const txt    = document.getElementById('alertBannerText');
@@ -344,14 +316,12 @@ async function submitManualVitals() {
     showToast('✅ Vitals Saved', 'Reading logged to your health record.');
     Object.keys(map).forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
     document.getElementById('manualEntry').style.display = 'none';
-    // Update display with first available value
     if (vitals.heartRate) { const el = document.getElementById('lv-heart'); if (el) el.textContent = vitals.heartRate; }
   } else {
     showToast('❌ Error', res.message);
   }
 }
 
-// ─── Vitals Log ──────────────────────────────────
 const logEntries = [];
 function addVitalsLogEntry(hr, spo2) {
   const now = new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
@@ -375,7 +345,6 @@ function renderVitalsLog() {
     </div>`).join('');
 }
 
-// ─── Appointments — fetched from backend ─────────
 async function loadOverviewAppointments() {
   const el = document.getElementById('apptList');
   if (!el) return;
@@ -491,9 +460,7 @@ async function submitDashBooking() {
   }
 }
 
-// ─── VIDEO CALL — real camera via getUserMedia ────
 async function openVideoCall(appointmentId, doctorName) {
-  // Show the modal
   const modal = new bootstrap.Modal(document.getElementById('videoCallModal'));
   modal.show();
 
@@ -509,14 +476,13 @@ async function openVideoCall(appointmentId, doctorName) {
     localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
     if (localVideo) {
       localVideo.srcObject = localStream;
-      localVideo.muted = true; // mute own audio to prevent echo
+      localVideo.muted = true;
     }
     if (statusEl) statusEl.textContent = 'Camera active. Connecting to doctor...';
     camEnabled = true;
     micEnabled = true;
     updateVideoControlIcons();
 
-    // Simulate connection to doctor after 2s
     setTimeout(() => {
       if (statusEl) statusEl.textContent = `Connected with ${doctorName}`;
       const remoteContainer = document.getElementById('remoteVideoContainer');
@@ -576,13 +542,11 @@ function endCall() {
   showToast('Call Ended', 'Video consultation has ended.');
 }
 
-// Stop camera if modal is closed via X button
 document.addEventListener('DOMContentLoaded', () => {
   const vcModal = document.getElementById('videoCallModal');
   if (vcModal) vcModal.addEventListener('hidden.bs.modal', () => stopCamera());
 });
 
-// ─── Medications ─────────────────────────────────
 function getMeds() { try { return JSON.parse(localStorage.getItem('hc_meds') || '[]'); } catch { return []; } }
 function saveMeds(meds) { localStorage.setItem('hc_meds', JSON.stringify(meds)); }
 
@@ -628,7 +592,6 @@ function deleteMed(index) {
   showToast('Removed', 'Medication removed.');
 }
 function addMedication() {
-  // Clear fields
   ['med-name', 'med-purpose', 'med-schedule'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
@@ -648,7 +611,6 @@ function submitAddMedication() {
   showToast('Added ✅', `${name} added to your medication list.`);
 }
 
-// ─── Doctors — fetched from backend ──────────────
 async function renderDashDoctors(filterSpec) {
   const grid = document.getElementById('dashDoctorsGrid');
   if (!grid) return;
@@ -685,7 +647,6 @@ async function renderDashDoctors(filterSpec) {
 }
 function filterDoctors(spec) { renderDashDoctors(spec || undefined); }
 
-// ─── Chat — messages saved to backend ────────────
 const DOCTOR_CONTACTS = [
   { name:'Dr. Priya Sharma', emoji:'👩‍⚕️', specialty:'General Medicine', online:true },
   { name:'Dr. Arjun Mehta',  emoji:'👨‍⚕️', specialty:'Cardiology',        online:true },
@@ -722,7 +683,7 @@ function selectContact(el, index) {
   activeChatIdx = index;
   updateChatHeader(index);
   renderChatMessages(index);
-  hideChatContacts(); // on mobile, switch to conversation view
+  hideChatContacts();
 }
 
 function updateChatHeader(index) {
@@ -773,10 +734,8 @@ async function sendChatMsg() {
   input.value = '';
   renderChatMessages(activeChatIdx);
 
-  // Save to backend — silently skipped if no valid recipient (doctors are not real DB users yet)
   apiCall('/chat/send', 'POST', { to: currentUser?._id || currentUser?.id || null, text }).catch(() => {});
 
-  // Doctor auto-reply
   setTimeout(() => {
     const replies = [
       'Thank you for reaching out. I will review your message shortly.',
@@ -791,7 +750,6 @@ async function sendChatMsg() {
   }, 1500);
 }
 
-// ─── Reports — real data from backend ────────────
 async function initReportsPage() {
   const ctx = document.getElementById('reportChart');
   if (!ctx) return;
@@ -802,7 +760,6 @@ async function initReportsPage() {
   let glucoseData = randArr(95, 20, 14);
   let labels      = Array.from({ length: 14 }, (_, i) => `Day ${i+1}`);
 
-  // Try to get real data from backend
   const res = await apiCall('/health/summary');
   if (res.success && res.data && res.data.length) {
     const data = res.data;
@@ -835,7 +792,6 @@ async function initReportsPage() {
 }
 function openReport(type) { showToast('Report', `${type.charAt(0).toUpperCase()+type.slice(1)} report — PDF export coming soon.`); }
 
-// ─── Profile — real user data, saved to backend ──
 function populateProfile(user) {
   const set    = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
   const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val || '—'; };
@@ -891,7 +847,6 @@ async function saveProfile() {
   }
 }
 
-// ─── Emergency ───────────────────────────────────
 function triggerSOS() {
   const modal = new bootstrap.Modal(document.getElementById('dashEmergencyModal'));
   modal.show();
@@ -906,7 +861,6 @@ function triggerSOS() {
   navigator.geolocation?.getCurrentPosition(pos => send({ lat:pos.coords.latitude, lng:pos.coords.longitude }), () => send());
 }
 
-// ─── Init ────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   updateDateTime();
   setInterval(updateDateTime, 60000);
@@ -915,10 +869,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   initDashScore();
   renderVitalsLog();
 
-  await loadCurrentUser();      // validates token, populates user
-  await loadOverviewAppointments(); // loads real appointments
+  await loadCurrentUser();
+  await loadOverviewAppointments();
 
-  // Socket.IO
   try {
     const socket = io('http://localhost:3000', { transports:['websocket','polling'] });
     socket.on('connect', () => {

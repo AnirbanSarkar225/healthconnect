@@ -1,8 +1,3 @@
-/* ═══════════════════════════════════════════════════
-   HEALTH CONNECT — APP.JS
-   Frontend on port 5500, backend on port 3000
-═══════════════════════════════════════════════════ */
-
 const API = 'http://localhost:3000/api';
 let authToken = localStorage.getItem('hc_token') || null;
 let demoInterval = null;
@@ -10,7 +5,6 @@ let mainChartInstance = null;
 let scoreChartInstance = null;
 let heroChartInstance = null;
 
-// ─── Utilities ───────────────────────────────────
 function showModal(id) {
   new bootstrap.Modal(document.getElementById(id)).show();
 }
@@ -40,12 +34,10 @@ function hideError(id) {
   document.getElementById(id)?.classList.add('d-none');
 }
 
-// ─── Navbar scroll ────────────────────────────────
 window.addEventListener('scroll', () => {
   document.getElementById('mainNav')?.classList.toggle('scrolled', window.scrollY > 50);
 });
 
-// ─── API helper ──────────────────────────────────
 async function apiCall(endpoint, method = 'GET', body = null) {
   const opts = {
     method,
@@ -63,7 +55,6 @@ async function apiCall(endpoint, method = 'GET', body = null) {
   }
 }
 
-// ─── Auth ────────────────────────────────────────
 async function handleLogin() {
   hideError('loginError');
   const email = document.getElementById('loginEmail').value.trim();
@@ -87,7 +78,6 @@ async function handleLogin() {
     hideModal('loginModal');
     showToast('Welcome back!', `Hello, ${res.user.fullName} 👋`);
     updateNavForLoggedIn(res.user);
-    // Redirect to dashboard after short delay
     setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
   } else {
     showError('loginError', res.message || 'Login failed.');
@@ -150,7 +140,6 @@ async function handleRegister() {
 function updateNavForLoggedIn(user) {
   const nav = document.querySelector('.navbar-nav.ms-auto');
   if (!nav) return;
-  // Remove last two items (Sign In + Dashboard buttons)
   const items = nav.querySelectorAll('li');
   if (items.length >= 2) {
     items[items.length - 1].remove();
@@ -189,12 +178,10 @@ function goToDashboard() {
   }
 }
 
-// ─── Doctors Grid ─────────────────────────────────
 async function renderDoctors() {
   const grid = document.getElementById('doctorsGrid');
   if (!grid) return;
 
-  // Fetch from API
   const res = await apiCall('/appointments/doctors');
   const doctors = res.success ? res.doctors : [];
 
@@ -228,7 +215,6 @@ async function renderDoctors() {
     </div>`).join('');
 }
 
-// ─── Booking ─────────────────────────────────────
 async function handleBooking() {
   const data = {
     specialty: document.getElementById('bookSpecialty').value,
@@ -259,7 +245,6 @@ async function handleBooking() {
   }
 }
 
-// ─── Charts ──────────────────────────────────────
 function buildWeekLabels() {
   return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 }
@@ -352,7 +337,6 @@ function initHeroChart() {
   });
 }
 
-// ─── Live vitals demo (landing page) ─────────────
 const vitalCfg = {
   heart:   { base: 72,   variance: 8,   decimal: 0, id: 'v-heart',   sid: 'vs-heart',   card: 'vc-heart'   },
   spo2:    { base: 98,   variance: 2,   decimal: 0, id: 'v-spo2',    sid: 'vs-spo2',    card: 'vc-spo2'    },
@@ -400,7 +384,6 @@ function startDemo() {
   showToast('Live Demo Active', 'Vitals updating every 2.5 seconds.');
 }
 
-// ─── Emergency ───────────────────────────────────
 let sosTimer = null;
 
 function triggerSOS() {
@@ -442,18 +425,15 @@ function triggerEmergency() {
 
 function triggerEmergencyTest() { triggerEmergency(); }
 
-// ─── Init ────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   renderDoctors();
   initMainChart('heart');
   initScoreChart();
   initHeroChart();
 
-  // Pre-fill booking datetime
   const dtInput = document.getElementById('bookDateTime');
   if (dtInput) dtInput.value = new Date(Date.now() + 3600000).toISOString().slice(0, 16);
 
-  // Restore session
   if (authToken) {
     apiCall('/auth/me').then(res => {
       if (res.success) {
@@ -467,7 +447,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Show login modal if redirected from dashboard
   const params = new URLSearchParams(window.location.search);
   if (params.get('require_login') || params.get('session_expired')) {
     const msg = params.get('session_expired') ? 'Your session has expired. Please sign in again.' : 'Please sign in to access the dashboard.';
@@ -475,11 +454,9 @@ document.addEventListener('DOMContentLoaded', () => {
       showModal('loginModal');
       showError('loginError', msg);
     }, 400);
-    // Clean URL
     window.history.replaceState({}, document.title, window.location.pathname);
   }
 
-  // Socket.IO — connect to backend port 3000
   try {
     const socket = io('http://localhost:3000', { transports: ['websocket', 'polling'] });
     socket.on('connect', () => console.log('🔌 Socket connected to backend'));
@@ -489,7 +466,6 @@ document.addEventListener('DOMContentLoaded', () => {
     console.warn('Socket.IO unavailable:', e.message);
   }
 
-  // Scroll animation
   const observer = new IntersectionObserver(entries => {
     entries.forEach(e => { if (e.isIntersecting) e.target.style.opacity = '1'; });
   }, { threshold: 0.1 });

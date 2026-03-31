@@ -14,7 +14,6 @@
 </head>
 <body class="dashboard-body">
 
-<!-- ── Sidebar ── -->
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-brand">
     <div class="brand-icon"><i class="bi bi-heart-pulse-fill"></i></div>
@@ -62,13 +61,10 @@
   </div>
 </aside>
 
-<!-- Sidebar Overlay (mobile backdrop) -->
-<div id="sidebarOverlay" onclick="closeSidebar()" style="display:none"></div>
+<div id="sidebarOverlay" onclick="closeSidebar()"></div>
 
-<!-- ── Main Content ── -->
 <main class="dashboard-main" id="dashMain">
 
-  <!-- Top Bar -->
   <header class="dash-topbar">
     <button class="sidebar-toggle d-lg-none" onclick="toggleSidebar()">
       <i class="bi bi-list"></i>
@@ -100,20 +96,16 @@
     </div>
   </header>
 
-  <!-- Page Content -->
   <div class="dash-content" id="dashContent">
 
-    <!-- ══ OVERVIEW PAGE ══ -->
     <div id="page-overview">
 
-      <!-- Alert Banner -->
       <div class="alert-banner mb-4 d-none" id="alertBanner">
         <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
         <span id="alertBannerText">Warning: Elevated heart rate detected. Consider resting.</span>
         <button class="btn-close btn-close-white btn-sm ms-auto" onclick="this.parentElement.classList.add('d-none')"></button>
       </div>
 
-      <!-- Quick Stats Row -->
       <div class="row g-3 mb-4">
         <div class="col-6 col-lg-3">
           <div class="stat-widget">
@@ -157,9 +149,7 @@
         </div>
       </div>
 
-      <!-- Middle Row -->
       <div class="row g-3 mb-4">
-        <!-- Heart Rate Chart -->
         <div class="col-lg-8">
           <div class="dash-card h-100">
             <div class="dash-card-header">
@@ -173,7 +163,6 @@
             <canvas id="hrChart" height="100"></canvas>
           </div>
         </div>
-        <!-- Health Score -->
         <div class="col-lg-4">
           <div class="dash-card h-100">
             <div class="dash-card-header"><span><i class="bi bi-award text-accent me-2"></i>Health Score</span></div>
@@ -195,9 +184,7 @@
         </div>
       </div>
 
-      <!-- Bottom Row -->
       <div class="row g-3">
-        <!-- Upcoming Appointments -->
         <div class="col-lg-5">
           <div class="dash-card h-100">
             <div class="dash-card-header">
@@ -210,7 +197,6 @@
           </div>
         </div>
 
-        <!-- Recent Vitals Log -->
         <div class="col-lg-4">
           <div class="dash-card h-100">
             <div class="dash-card-header">
@@ -218,12 +204,10 @@
               <span class="small text-muted">Today</span>
             </div>
             <div class="vitals-log" id="vitalsLog">
-              <!-- populated by JS -->
             </div>
           </div>
         </div>
 
-        <!-- Quick Actions -->
         <div class="col-lg-3">
           <div class="dash-card h-100">
             <div class="dash-card-header"><span><i class="bi bi-lightning-charge text-accent me-2"></i>Quick Actions</span></div>
@@ -258,7 +242,6 @@
       </div>
     </div>
 
-    <!-- ══ VITALS PAGE ══ -->
     <div id="page-vitals" class="d-none">
       <div class="page-header mb-4">
         <h4><i class="bi bi-heart-pulse text-accent me-2"></i>Vitals Monitor</h4>
@@ -272,7 +255,6 @@
         </div>
       </div>
 
-      <!-- Full vitals grid -->
       <div class="row g-3 mb-4">
         <div class="col-6 col-md-4 col-lg-2" id="each" v="heart">
           <div class="vital-card text-center" id="lvc-heart">
@@ -343,7 +325,6 @@
             <canvas id="liveSpo2Chart" height="120"></canvas>
           </div>
         </div>
-        <!-- Manual Entry Form -->
         <div class="col-12">
           <div class="dash-card" id="manualEntry" style="display:none">
             <div class="dash-card-header"><span><i class="bi bi-pencil-square text-accent me-2"></i>Log Vitals Manually</span></div>
@@ -364,7 +345,6 @@
       </div>
     </div>
 
-    <!-- ══ APPOINTMENTS PAGE ══ -->
     <div id="page-appointments" class="d-none">
       <div class="page-header mb-4">
         <h4><i class="bi bi-calendar-check text-accent me-2"></i>Appointments</h4>
@@ -380,7 +360,6 @@
               </select>
             </div>
             <div id="fullApptList">
-              <!-- Populated by JS -->
             </div>
           </div>
         </div>
@@ -403,7 +382,6 @@
       </div>
     </div>
 
-    <!-- ══ REPORTS PAGE ══ -->
     <div id="page-reports" class="d-none">
       <div class="page-header mb-4">
         <h4><i class="bi bi-file-medical text-accent me-2"></i>Health Reports</h4>
@@ -434,7 +412,6 @@
             <div class="rc-badge bg-warning-soft text-warning">Generating</div>
           </div>
         </div>
-        <!-- Detailed Chart -->
         <div class="col-12">
           <div class="dash-card">
             <div class="dash-card-header mb-3">
@@ -446,7 +423,6 @@
       </div>
     </div>
 
-    <!-- ══ MEDICATIONS PAGE ══ -->
     <div id="page-medications" class="d-none">
       <div class="page-header mb-4">
         <h4><i class="bi bi-capsule text-accent me-2"></i>Medications</h4>
@@ -457,7 +433,6 @@
           <div class="dash-card">
             <div class="dash-card-header mb-3"><span>Current Medications</span></div>
             <div id="medsList">
-              <!-- Populated by JS -->
             </div>
           </div>
         </div>
@@ -465,14 +440,12 @@
           <div class="dash-card">
             <div class="dash-card-header mb-3"><span><i class="bi bi-alarm text-accent me-2"></i>Today's Schedule</span></div>
             <div class="med-schedule" id="medSchedule">
-              <!-- Populated by JS -->
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ══ CHAT PAGE ══ -->
     <div id="page-chat" class="d-none">
       <div class="page-header mb-4">
         <h4><i class="bi bi-chat-dots text-accent me-2"></i>Messages</h4>
@@ -481,7 +454,6 @@
         <div class="chat-sidebar">
           <div class="chat-search"><input type="text" placeholder="Search conversations..." class="form-control hc-input form-control-sm"/></div>
           <div class="chat-contacts" id="chatContacts">
-            <!-- Populated by JS -->
           </div>
         </div>
         <div class="chat-main">
@@ -498,7 +470,6 @@
             </div>
           </div>
           <div class="chat-messages" id="chatMessages">
-            <!-- Populated by JS -->
           </div>
           <div class="chat-input-bar">
             <input type="text" id="chatInput" class="form-control hc-input" placeholder="Type your message..." onkeypress="if(event.key==='Enter') sendChatMsg()"/>
@@ -508,7 +479,6 @@
       </div>
     </div>
 
-    <!-- ══ PROFILE PAGE ══ -->
     <div id="page-profile" class="d-none">
       <div class="page-header mb-4">
         <h4><i class="bi bi-person-gear text-accent me-2"></i>My Health Profile</h4>
@@ -561,7 +531,6 @@
       </div>
     </div>
 
-    <!-- ══ FIND DOCTOR PAGE ══ -->
     <div id="page-doctors" class="d-none">
       <div class="page-header mb-4">
         <h4><i class="bi bi-person-video3 text-accent me-2"></i>Find a Doctor</h4>
@@ -576,7 +545,6 @@
       <div class="row g-3" id="dashDoctorsGrid"></div>
     </div>
 
-    <!-- ══ SETTINGS PAGE ══ -->
     <div id="page-settings" class="d-none">
       <div class="page-header mb-4">
         <h4><i class="bi bi-gear text-accent me-2"></i>Settings</h4>
@@ -631,10 +599,9 @@
       </div>
     </div>
 
-  </div><!-- /dash-content -->
+  </div>
 </main>
 
-<!-- Booking Modal -->
 <div class="modal fade" id="dashBookingModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content hc-modal">
@@ -664,7 +631,49 @@
   </div>
 </div>
 
-<!-- Emergency Modal (same as main) -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content hc-modal">
+      <div class="modal-body text-center py-4">
+        <i class="bi bi-exclamation-circle fs-1 text-warning d-block mb-3"></i>
+        <p id="confirmModalText" style="color:var(--text-primary);font-weight:600">Are you sure?</p>
+        <div class="d-flex gap-2 justify-content-center mt-3">
+          <button class="btn btn-accent" id="confirmModalOk">Yes, Confirm</button>
+          <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="addMedModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content hc-modal">
+      <div class="modal-header border-0">
+        <h5 class="modal-title"><i class="bi bi-capsule me-2 text-accent"></i>Add Medication</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Medication Name *</label>
+          <input type="text" class="form-control hc-input" id="med-name" placeholder="e.g. Paracetamol 500mg"/>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Purpose</label>
+          <input type="text" class="form-control hc-input" id="med-purpose" placeholder="e.g. Pain relief"/>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Schedule</label>
+          <input type="text" class="form-control hc-input" id="med-schedule" placeholder="e.g. Twice daily after meals"/>
+        </div>
+        <button class="btn btn-accent w-100" onclick="submitAddMedication()">
+          <i class="bi bi-plus-circle me-2"></i>Add Medication
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal fade" id="dashEmergencyModal" tabindex="-1" data-bs-backdrop="static">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content emergency-modal">
@@ -686,7 +695,6 @@
   </div>
 </div>
 
-<!-- Toast -->
 <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:9999">
   <div id="dashToast" class="toast hc-toast" role="alert">
     <div class="toast-header border-0">
@@ -698,7 +706,6 @@
   </div>
 </div>
 
-<!-- ══ VIDEO CALL MODAL ══ -->
 <div class="modal fade" id="videoCallModal" tabindex="-1" data-bs-backdrop="static">
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content video-modal">
@@ -708,19 +715,16 @@
       </div>
       <div class="modal-body" style="background:#000;padding:16px">
         <div id="videoStatus" style="color:#aaa;font-size:0.82rem;text-align:center;margin-bottom:10px">Initialising...</div>
-        <!-- Remote video (doctor) -->
         <div id="remoteVideoContainer" class="d-none mb-2">
           <div style="position:relative">
             <video id="remoteVideo" autoplay playsinline style="width:100%;border-radius:10px;background:#111;min-height:220px"></video>
             <div style="position:absolute;bottom:8px;left:12px;color:#fff;font-size:0.8rem;background:rgba(0,0,0,0.5);padding:2px 8px;border-radius:20px">Doctor</div>
           </div>
         </div>
-        <!-- Local video (you) -->
         <div style="position:relative;display:inline-block;width:100%">
           <video id="localVideo" autoplay playsinline muted style="width:100%;border-radius:10px;background:#111;min-height:180px"></video>
           <div style="position:absolute;bottom:8px;left:12px;color:#fff;font-size:0.8rem;background:rgba(0,0,0,0.5);padding:2px 8px;border-radius:20px">You</div>
         </div>
-        <!-- Controls -->
         <div class="video-controls mt-2">
           <button class="video-ctrl-btn cam-on" id="btnToggleCam" onclick="toggleCamera()" title="Toggle Camera">
             <i class="bi bi-camera-video-fill"></i>

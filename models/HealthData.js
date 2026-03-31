@@ -4,14 +4,14 @@ const healthDataSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   timestamp: { type: Date, default: Date.now },
   vitals: {
-    heartRate: { type: Number },           // bpm
-    bloodPressureSystolic: { type: Number }, // mmHg
+    heartRate: { type: Number },
+    bloodPressureSystolic: { type: Number },
     bloodPressureDiastolic: { type: Number },
-    oxygenSaturation: { type: Number },    // SpO2 %
-    temperature: { type: Number },         // Celsius
-    respiratoryRate: { type: Number },     // breaths/min
-    bloodGlucose: { type: Number },        // mg/dL
-    weight: { type: Number },              // kg
+    oxygenSaturation: { type: Number },
+    temperature: { type: Number },
+    respiratoryRate: { type: Number },
+    bloodGlucose: { type: Number },
+    weight: { type: Number },
     bmi: { type: Number }
   },
   status: {
@@ -27,7 +27,6 @@ const healthDataSchema = new mongoose.Schema({
   }
 });
 
-// Auto-detect critical status
 healthDataSchema.pre('save', function(next) {
   const v = this.vitals;
   const alerts = [];

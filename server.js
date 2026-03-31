@@ -10,7 +10,6 @@ const connectDB = require('./config/database');
 const app = express();
 const server = http.createServer(app);
 
-// Allow frontend on port 5500 (Live Server) AND port 3000 (same origin)
 const io = new Server(server, {
   cors: {
     origin: ['http://localhost:5500', 'http://127.0.0.1:5500', 'http://localhost:3000'],
@@ -21,7 +20,6 @@ const io = new Server(server, {
 
 connectDB();
 
-// CORS — must come before routes
 app.use(cors({
   origin: ['http://localhost:5500', 'http://127.0.0.1:5500', 'http://localhost:3000'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -34,24 +32,20 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// API Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/health', require('./routes/health'));
 app.use('/api/appointments', require('./routes/appointments'));
 app.use('/api/emergency', require('./routes/emergency'));
 app.use('/api/chat', require('./routes/chat'));
 
-// Status endpoint
 app.get('/api/status', (req, res) => {
   res.json({ status: 'online', message: 'Health Connect API running', timestamp: new Date() });
 });
 
-// Serve index.html for root — static middleware handles dashboard.html, css, js
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Socket.IO
 const onlineUsers = new Map();
 
 io.on('connection', (socket) => {

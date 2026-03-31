@@ -6,7 +6,6 @@ const User = require('../models/User');
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET || 'healthconnect_secret', { expiresIn: '7d' });
 
-// POST /api/auth/register
 router.post('/register', async (req, res) => {
   try {
     const { fullName, email, password, phone, dateOfBirth, bloodGroup, emergencyContact } = req.body;
@@ -42,7 +41,6 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// POST /api/auth/login
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -66,7 +64,6 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// GET /api/auth/me (protected)
 router.get('/me', async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
@@ -82,7 +79,6 @@ router.get('/me', async (req, res) => {
   }
 });
 
-// PUT /api/auth/profile (update profile)
 router.put('/profile', async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];

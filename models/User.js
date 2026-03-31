@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema({
     phone: { type: String },
     relation: { type: String }
   },
-  weight: { type: Number },             // kg
+  weight: { type: Number },
   medicalHistory: [{ type: String }],
   allergies: [{ type: String }],
   currentMedications: [{ type: String }],

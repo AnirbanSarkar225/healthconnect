@@ -7,7 +7,7 @@ const appointmentSchema = new mongoose.Schema({
   specialty: { type: String, required: true },
   type: { type: String, enum: ['video', 'chat', 'in-person'], default: 'video' },
   scheduledAt: { type: Date, required: true },
-  duration: { type: Number, default: 30 }, // minutes
+  duration: { type: Number, default: 30 },
   status: { type: String, enum: ['pending', 'confirmed', 'ongoing', 'completed', 'cancelled'], default: 'pending' },
   symptoms: { type: String },
   notes: { type: String },

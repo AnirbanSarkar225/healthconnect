@@ -14,7 +14,6 @@ const auth = (req, res, next) => {
   }
 };
 
-// POST /api/health/vitals
 router.post('/vitals', auth, async (req, res) => {
   try {
     const { vitals, location } = req.body;
@@ -28,7 +27,6 @@ router.post('/vitals', auth, async (req, res) => {
   }
 });
 
-// GET /api/health/vitals — last 50 readings
 router.get('/vitals', auth, async (req, res) => {
   try {
     const data = await HealthData.find({ userId: req.user.id }).sort({ timestamp: -1 }).limit(50);
@@ -38,7 +36,6 @@ router.get('/vitals', auth, async (req, res) => {
   }
 });
 
-// GET /api/health/latest
 router.get('/latest', auth, async (req, res) => {
   try {
     const data = await HealthData.findOne({ userId: req.user.id }).sort({ timestamp: -1 });
@@ -48,7 +45,6 @@ router.get('/latest', auth, async (req, res) => {
   }
 });
 
-// GET /api/health/summary — 7-day
 router.get('/summary', auth, async (req, res) => {
   try {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
