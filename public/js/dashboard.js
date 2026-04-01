@@ -131,7 +131,7 @@ function loadPage(page) {
   if (page === 'reports')      initReportsPage();
   if (page === 'medications')  renderMedications();
   if (page === 'doctors')      renderDashDoctors();
-  if (page === 'chat')         initChat();
+  if (page === 'chat')         { initChat(); resetMsgBadges(); }
   if (page === 'profile')      { if (currentUser) populateProfile(currentUser); }
   document.getElementById('sidebar').classList.remove('open');
 }
@@ -321,6 +321,8 @@ async function loadOverviewAppointments() {
   const upcoming = (res.appointments || []).filter(a => a.status !== 'cancelled' && a.status !== 'completed').slice(0, 4);
   if (!upcoming.length) {
     el.innerHTML = `<div class="text-center py-3" style="color:var(--text-secondary);font-size:0.88rem">No upcoming appointments.<br><button class="btn btn-xs btn-accent mt-2" onclick="showBookingModal()">Book Now</button></div>`;
+    const badge = document.getElementById('apptBadge');
+    if (badge) { badge.textContent = '0'; badge.classList.add('d-none'); }
     return;
   }
   const colMap = { pending:'warning', confirmed:'success', ongoing:'info' };
@@ -342,7 +344,15 @@ async function loadOverviewAppointments() {
     </div>`;
   }).join('');
   const badge = document.getElementById('apptBadge');
-  if (badge) badge.textContent = upcoming.length;
+  if (badge) {
+    if (upcoming.length > 0) {
+      badge.textContent = upcoming.length;
+      badge.classList.remove('d-none');
+    } else {
+      badge.textContent = '0';
+      badge.classList.add('d-none');
+    }
+  }
 }
 async function loadAppointmentsPage() {
   const el = document.getElementById('fullApptList');
@@ -355,6 +365,8 @@ async function loadAppointmentsPage() {
   }
   if (!(res.appointments||[]).length) {
     el.innerHTML = `<div class="text-center py-4" style="color:var(--text-secondary)">No appointments yet.<br><button class="btn btn-sm btn-accent mt-2" onclick="showBookingModal()">Book Your First</button></div>`;
+    const badge = document.getElementById('apptBadge');
+    if (badge) { badge.textContent = '0'; badge.classList.add('d-none'); }
     return;
   }
   const colMap = { pending:'warning', confirmed:'success', ongoing:'info', completed:'secondary', cancelled:'danger' };
@@ -881,18 +893,94 @@ async function sendChatMsg() {
   input.value = '';
   renderChatMessages(activeChatIdx);
   apiCall('/chat/send', 'POST', { to: currentUser?._id || currentUser?.id || null, text }).catch(() => {});
+  const doc = DOCTOR_CONTACTS[activeChatIdx];
+  const replyText = generateContextualReply(text, doc);
   setTimeout(() => {
-    const replies = [
-      'Thank you for reaching out. I will review your message shortly.',
-      'I can see your recent vitals. Everything looks stable.',
-      'Please book an appointment for a detailed consultation.',
-      'Stay hydrated and get adequate rest. Let me know if symptoms persist.',
-      'I will get back to you with a detailed response soon.'
-    ];
     const replyTime = new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
-    chatHistories[activeChatIdx].push({ from:'doctor', text: replies[Math.floor(Math.random()*replies.length)], time:replyTime });
+    chatHistories[activeChatIdx].push({ from:'doctor', text: replyText, time:replyTime });
     renderChatMessages(activeChatIdx);
+    updateMsgBadges();
   }, 1500);
+}
+function generateContextualReply(userMsg, doctor) {
+  const msg = userMsg.toLowerCase();
+  const name = doctor?.name || 'Doctor';
+  if (msg.includes('hello') || msg.includes('hi') || msg.includes('hey') || msg.includes('good morning') || msg.includes('good evening') || msg.includes('good afternoon')) {
+    return `Hello! I'm ${name}. How can I help you today?`;
+  }
+  if (msg.includes('headache') || msg.includes('head pain') || msg.includes('migraine')) {
+    return 'I understand you\'re experiencing headaches. How long have they been occurring? Are they constant or intermittent? In the meantime, stay hydrated and rest in a quiet, dark room.';
+  }
+  if (msg.includes('fever') || msg.includes('temperature') || msg.includes('hot')) {
+    return 'I see you\'re reporting a fever. What is your current temperature? Have you taken any medication like paracetamol? Please stay hydrated and monitor your temperature regularly.';
+  }
+  if (msg.includes('cough') || msg.includes('cold') || msg.includes('sneez') || msg.includes('throat') || msg.includes('sore')) {
+    return 'Sorry to hear about your symptoms. Is the cough dry or productive? Do you have a sore throat as well? Warm fluids and rest can help. I\'d recommend booking a consultation if it persists beyond 3 days.';
+  }
+  if (msg.includes('pain') || msg.includes('hurt') || msg.includes('ache')) {
+    return 'I\'m sorry you\'re in pain. Can you describe where exactly it hurts and rate the intensity on a scale of 1-10? Also, when did it start? This will help me assess your condition better.';
+  }
+  if (msg.includes('anxiety') || msg.includes('stress') || msg.includes('depress') || msg.includes('mental') || msg.includes('sleep') || msg.includes('insomnia')) {
+    return 'I appreciate you sharing this. Mental health is just as important as physical health. How long have you been feeling this way? I\'d recommend we schedule a proper consultation to discuss this in detail.';
+  }
+  if (msg.includes('stomach') || msg.includes('nausea') || msg.includes('vomit') || msg.includes('diarr') || msg.includes('digest') || msg.includes('abdomen')) {
+    return 'Digestive issues can be uncomfortable. Have you eaten anything unusual recently? Are you experiencing any nausea or changes in appetite? Try to stay hydrated with small sips of water or oral rehydration solution.';
+  }
+  if (msg.includes('blood pressure') || msg.includes('bp') || msg.includes('hypertension')) {
+    return 'Blood pressure management is important. What were your recent readings? Are you currently on any medication for it? I\'d recommend monitoring it twice daily — morning and evening — and keeping a log.';
+  }
+  if (msg.includes('diabetes') || msg.includes('sugar') || msg.includes('glucose') || msg.includes('insulin')) {
+    return 'Managing blood sugar levels is crucial. What are your recent fasting and post-meal glucose readings? Are you following a specific diet plan? Regular monitoring and a balanced diet are key.';
+  }
+  if (msg.includes('rash') || msg.includes('skin') || msg.includes('itch') || msg.includes('allerg')) {
+    return 'Skin concerns can have many causes. When did you first notice this? Have you been exposed to any new products, foods, or environments? Avoid scratching — I\'d recommend a video consult so I can see the affected area.';
+  }
+  if (msg.includes('appointment') || msg.includes('book') || msg.includes('schedule') || msg.includes('visit') || msg.includes('consult')) {
+    return 'I\'d be happy to help you schedule a consultation. You can book directly through the Appointments section — choose a time that works best for you and I\'ll be ready.';
+  }
+  if (msg.includes('medicine') || msg.includes('medication') || msg.includes('tablet') || msg.includes('drug') || msg.includes('prescription') || msg.includes('dose')) {
+    return 'Regarding your medication query — please never change dosages without consulting your doctor first. Can you tell me which medication you\'re referring to so I can provide specific guidance?';
+  }
+  if (msg.includes('thank') || msg.includes('thanks') || msg.includes('appreciate')) {
+    return 'You\'re welcome! Don\'t hesitate to reach out if you have more questions. Take care and stay healthy! 😊';
+  }
+  if (msg.includes('report') || msg.includes('result') || msg.includes('test') || msg.includes('lab')) {
+    return 'I\'d like to review your test results. Could you share the specific report or values you\'re concerned about? You can also upload them through the Health Reports section for a detailed analysis.';
+  }
+  if (msg.includes('chest') || msg.includes('heart') || msg.includes('palpitation') || msg.includes('breath')) {
+    return 'Chest-related symptoms should be taken seriously. Are you experiencing any shortness of breath, palpitations, or chest tightness? If the pain is severe or sudden, please call emergency services immediately.';
+  }
+  if (msg.includes('exercise') || msg.includes('workout') || msg.includes('diet') || msg.includes('weight') || msg.includes('fitness')) {
+    return 'Great that you\'re thinking about your fitness! Based on your health profile, I\'d recommend starting with moderate activity — 30 minutes of walking daily. Would you like me to create a personalized wellness plan?';
+  }
+  if (msg.includes('?')) {
+    return `That's a good question. Based on my assessment, I'd recommend we discuss this in detail during a scheduled consultation. Meanwhile, please monitor your symptoms and note any changes.`;
+  }
+  if (msg.length < 15) {
+    return `I see. Could you elaborate a bit more so I can better assist you? Feel free to describe your symptoms or concerns in detail.`;
+  }
+  return `Thank you for sharing that information. Based on what you've described, I'd like to learn more. Could you provide additional details about when this started and any other symptoms? This will help me give you the best advice.`;
+}
+let unreadMsgCount = 0;
+function updateMsgBadges() {
+  unreadMsgCount++;
+  const msgBadge = document.getElementById('msgBadge');
+  const topbarBadge = document.getElementById('topbarMsgBadge');
+  if (msgBadge) {
+    msgBadge.textContent = String(unreadMsgCount);
+    msgBadge.classList.remove('d-none');
+  }
+  if (topbarBadge) {
+    topbarBadge.textContent = String(unreadMsgCount);
+    topbarBadge.classList.remove('d-none');
+  }
+}
+function resetMsgBadges() {
+  unreadMsgCount = 0;
+  const msgBadge = document.getElementById('msgBadge');
+  const topbarBadge = document.getElementById('topbarMsgBadge');
+  if (msgBadge) { msgBadge.textContent = '0'; msgBadge.classList.add('d-none'); }
+  if (topbarBadge) { topbarBadge.textContent = '0'; topbarBadge.classList.add('d-none'); }
 }
 async function initReportsPage() {
   const ctx = document.getElementById('reportChart');

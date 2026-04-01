@@ -29,7 +29,7 @@
     </a>
     <a class="sidebar-link" href="#" onclick="loadPage('appointments')">
       <i class="bi bi-calendar-check"></i><span>Appointments</span>
-      <span class="badge bg-accent ms-auto" id="apptBadge">2</span>
+      <span class="badge bg-accent ms-auto d-none" id="apptBadge">0</span>
     </a>
     <a class="sidebar-link" href="#" onclick="loadPage('reports')">
       <i class="bi bi-file-medical"></i><span>Health Reports</span>
@@ -43,7 +43,7 @@
     </a>
     <a class="sidebar-link" href="#" onclick="loadPage('chat')">
       <i class="bi bi-chat-dots"></i><span>Messages</span>
-      <span class="badge bg-danger ms-auto">3</span>
+      <span class="badge bg-danger ms-auto d-none" id="msgBadge">0</span>
     </a>
     <div class="nav-section-label mt-3">Account</div>
     <a class="sidebar-link" href="#" onclick="loadPage('profile')">
@@ -76,7 +76,7 @@
       </div>
       <button class="btn btn-outline-secondary btn-sm position-relative" onclick="loadPage('chat')">
         <i class="bi bi-bell"></i>
-        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.55rem">3</span>
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" style="font-size:0.55rem" id="topbarMsgBadge">0</span>
       </button>
       <div class="dropdown">
         <button class="btn topbar-avatar dropdown-toggle" data-bs-toggle="dropdown">
