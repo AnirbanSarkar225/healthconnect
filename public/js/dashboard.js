@@ -117,7 +117,7 @@ function logout() {
   localStorage.removeItem('hc_name');
   window.location.href = 'index.html';
 }
-const PAGES = ['overview','vitals','appointments','reports','medications','doctors','chat','profile','settings'];
+const PAGES = ['overview','vitals','appointments','reports','medications','prescriptions','doctors','chat','notifications','profile','settings'];
 function loadPage(page) {
   PAGES.forEach(p => document.getElementById(`page-${p}`)?.classList.add('d-none'));
   const target = document.getElementById(`page-${page}`);
@@ -130,6 +130,8 @@ function loadPage(page) {
   if (page === 'appointments') loadAppointmentsPage();
   if (page === 'reports')      initReportsPage();
   if (page === 'medications')  renderMedications();
+  if (page === 'prescriptions') loadPrescriptions();
+  if (page === 'notifications') loadNotifications();
   if (page === 'doctors')      renderDashDoctors();
   if (page === 'chat')         { initChat(); resetMsgBadges(); }
   if (page === 'profile')      { if (currentUser) populateProfile(currentUser); }
@@ -1072,6 +1074,156 @@ async function saveProfile() {
     showToast('Save Failed', res.message || 'Could not update profile.');
   }
 }
+// ─── loadPage dispatcher — add prescriptions + notifications ───
+const _origLoadPage = typeof loadPage === 'function' ? loadPage : null;
+
+// ─── Prescriptions Page ────────────────────────────────────────────
+async function loadPrescriptions() {
+  const c = document.getElementById('dashContent');
+  c.innerHTML = `
+    <div class="dash-page-header mb-4 d-flex align-items-center justify-content-between">
+      <div>
+        <h4 class="fw-700 mb-1"><i class="bi bi-file-earmark-medical text-accent me-2"></i>My Prescriptions</h4>
+        <p class="text-muted small mb-0">Digital prescriptions issued by your doctors</p>
+      </div>
+      <button class="btn btn-outline-secondary btn-sm" onclick="loadPrescriptions()"><i class="bi bi-arrow-clockwise me-1"></i>Refresh</button>
+    </div>
+    <div id="rxList"><div class="text-center py-5"><div class="spinner-border text-accent"></div></div></div>`;
+
+  const res = await apiCall('/prescriptions');
+  const list = document.getElementById('rxList');
+  if (!list) return;
+
+  if (!res.success || !res.prescriptions?.length) {
+    list.innerHTML = `<div class="dash-card text-center py-5">
+      <i class="bi bi-file-earmark-medical fs-1 text-muted"></i>
+      <p class="text-muted mt-3">No prescriptions yet. Your doctor will add them here after a consultation.</p>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = res.prescriptions.map(rx => {
+    const statusColor = rx.status === 'active' ? 'success' : rx.status === 'revoked' ? 'danger' : 'secondary';
+    const meds = rx.medications.map(m =>
+      `<div class="rx-med-row"><i class="bi bi-capsule-pill text-accent me-2"></i>
+        <strong>${m.name}</strong> ${m.dosage ? '— '+m.dosage : ''}
+        <span class="text-muted small ms-2">${m.frequency} · ${m.duration}</span>
+        ${m.instructions ? '<br><small class="text-muted ms-4">'+m.instructions+'</small>' : ''}
+      </div>`
+    ).join('');
+    return `<div class="dash-card mb-3">
+      <div class="d-flex align-items-start justify-content-between mb-2">
+        <div>
+          <h6 class="fw-700 mb-1"><i class="bi bi-clipboard2-pulse text-accent me-2"></i>${rx.diagnosis}</h6>
+          <small class="text-muted"><i class="bi bi-person-badge me-1"></i>${rx.doctor} &nbsp;·&nbsp; <i class="bi bi-calendar me-1"></i>${new Date(rx.issuedAt).toLocaleDateString('en-IN')}</small>
+        </div>
+        <span class="badge bg-${statusColor}-soft text-${statusColor} text-capitalize">${rx.status}</span>
+      </div>
+      <div class="rx-meds-list mt-3">${meds}</div>
+      ${rx.notes ? `<div class="mt-2 p-2 rounded" style="background:var(--bg-elevated)"><small><i class="bi bi-chat-square-text me-1 text-muted"></i>${rx.notes}</small></div>` : ''}
+      <div class="mt-3 d-flex gap-2">
+        <button class="btn btn-xs btn-outline-secondary" onclick="printPrescription('${rx._id}')"><i class="bi bi-printer me-1"></i>Print</button>
+        <small class="text-muted ms-auto align-self-center">Expires: ${rx.expiresAt ? new Date(rx.expiresAt).toLocaleDateString('en-IN') : 'N/A'}</small>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function printPrescription(id) {
+  showToast('Preparing Print', 'Opening print view for prescription...');
+  setTimeout(() => window.print(), 500);
+}
+
+// ─── Notifications Page ────────────────────────────────────────────
+const localNotifications = [];
+
+function pushNotification(title, body, type='info') {
+  localNotifications.unshift({ title, body, type, time: new Date(), read: false });
+  const badge = document.getElementById('notifBadge');
+  const topBadge = document.getElementById('topbarMsgBadge');
+  const unread = localNotifications.filter(n => !n.read).length;
+  if (badge) { badge.textContent = unread; badge.classList.toggle('d-none', unread === 0); }
+  showToast(title, body);
+}
+
+function loadNotifications() {
+  const c = document.getElementById('dashContent');
+  const iconMap = { info:'bell', success:'check-circle', warning:'exclamation-triangle', danger:'x-circle' };
+  const colorMap = { info:'accent', success:'success', warning:'warning', danger:'danger' };
+
+  // Seed sample notifications if empty
+  if (!localNotifications.length) {
+    localNotifications.push(
+      { title:'Appointment Confirmed', body:'Your General Medicine consultation is confirmed for tomorrow at 10:00 AM.', type:'success', time: new Date(Date.now()-3600000), read:false },
+      { title:'Vital Alert', body:'Your blood pressure reading of 185/110 was above normal range. Consider resting.', type:'warning', time: new Date(Date.now()-7200000), read:true },
+      { title:'New Prescription', body:'Dr. Priya Sharma has issued a new prescription for you.', type:'info', time: new Date(Date.now()-86400000), read:true },
+      { title:'Emergency Resolved', body:'Your emergency alert from yesterday has been marked resolved.', type:'success', time: new Date(Date.now()-172800000), read:true }
+    );
+  }
+
+  const unread = localNotifications.filter(n => !n.read).length;
+  c.innerHTML = `
+    <div class="dash-page-header mb-4 d-flex align-items-center justify-content-between">
+      <div>
+        <h4 class="fw-700 mb-1"><i class="bi bi-bell text-accent me-2"></i>Notifications</h4>
+        <p class="text-muted small mb-0">${unread} unread notification${unread !== 1 ? 's' : ''}</p>
+      </div>
+      <button class="btn btn-outline-secondary btn-sm" onclick="markAllRead()"><i class="bi bi-check2-all me-1"></i>Mark All Read</button>
+    </div>
+    <div id="notifList">
+      ${localNotifications.length === 0 ? `<div class="dash-card text-center py-5"><i class="bi bi-bell-slash fs-1 text-muted"></i><p class="text-muted mt-3">No notifications yet.</p></div>` :
+        localNotifications.map((n, i) => `
+        <div class="dash-card mb-2 d-flex align-items-start gap-3 ${n.read ? 'opacity-60' : ''}" style="cursor:pointer" onclick="readNotif(${i})">
+          <div class="notif-icon notif-${n.type}"><i class="bi bi-${iconMap[n.type] || 'bell'}"></i></div>
+          <div class="flex-grow-1">
+            <div class="d-flex justify-content-between align-items-start">
+              <span class="fw-600 ${n.read ? '' : 'text-accent'}">${n.title}</span>
+              <small class="text-muted ms-2 text-nowrap">${timeAgo(n.time)}</small>
+            </div>
+            <p class="text-muted small mb-0 mt-1">${n.body}</p>
+          </div>
+          ${!n.read ? '<span class="notif-dot"></span>' : ''}
+        </div>`).join('')
+      }
+    </div>`;
+}
+
+function readNotif(i) {
+  if (localNotifications[i]) { localNotifications[i].read = true; }
+  loadNotifications();
+  const unread = localNotifications.filter(n => !n.read).length;
+  const badge = document.getElementById('notifBadge');
+  if (badge) { badge.textContent = unread; badge.classList.toggle('d-none', unread === 0); }
+}
+
+function markAllRead() {
+  localNotifications.forEach(n => n.read = true);
+  loadNotifications();
+  document.getElementById('notifBadge')?.classList.add('d-none');
+}
+
+function timeAgo(date) {
+  const diff = Math.floor((Date.now() - new Date(date)) / 1000);
+  if (diff < 60) return 'Just now';
+  if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+  return Math.floor(diff/86400) + 'd ago';
+}
+
+// ─── Export Health Record ─────────────────────────────────────────
+function exportHealthRecord() {
+  const user = currentUser || JSON.parse(localStorage.getItem('hc_user') || '{}');
+  const name = user.fullName || 'Patient';
+  const date = new Date().toLocaleDateString('en-IN');
+  const content = `HEALTH CONNECT — HEALTH RECORD EXPORT\n${'='.repeat(50)}\nPatient: ${name}\nExported: ${date}\nBlood Group: ${user.bloodGroup || 'Unknown'}\n\nThis is a summary export. Please visit your dashboard for full records.\n\nContact: 1800-HC-HELP`;
+  const blob = new Blob([content], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `HealthRecord_${name.replace(/ /g,'_')}_${Date.now()}.txt`;
+  a.click();
+  showToast('Export Ready ✅', 'Your health record has been downloaded.');
+}
+
 function triggerSOS() {
   const modal = new bootstrap.Modal(document.getElementById('dashEmergencyModal'));
   modal.show();

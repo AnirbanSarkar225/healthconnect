@@ -460,19 +460,56 @@
 <div class="modal fade" id="loginModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content hc-modal">
-      <div class="modal-header border-0">
+      <div class="modal-header border-0 pb-0">
         <h5 class="modal-title"><i class="bi bi-shield-lock me-2 text-accent"></i>Sign In</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body pt-2">
+        <!-- Role Tabs -->
+        <div class="role-tabs mb-4">
+          <button class="role-tab active" id="tab-patient" onclick="switchRoleTab('patient')">
+            <i class="bi bi-person-heart"></i> Patient
+          </button>
+          <button class="role-tab" id="tab-doctor" onclick="switchRoleTab('doctor')">
+            <i class="bi bi-heart-pulse"></i> Doctor
+          </button>
+          <button class="role-tab" id="tab-admin" onclick="switchRoleTab('admin')">
+            <i class="bi bi-shield-check"></i> Admin
+          </button>
+        </div>
         <div id="loginError" class="alert alert-danger d-none"></div>
-        <div class="mb-3">
+        <!-- Patient Fields -->
+        <div id="fields-patient">
+          <div class="role-login-badge patient-badge"><i class="bi bi-person-heart me-2"></i>Patient Portal — Secure Health Access</div>
+        </div>
+        <!-- Doctor Fields -->
+        <div id="fields-doctor" class="d-none">
+          <div class="role-login-badge doctor-badge"><i class="bi bi-heart-pulse me-2"></i>Doctor Portal — Licensed Medical Professionals Only</div>
+        </div>
+        <!-- Admin Fields -->
+        <div id="fields-admin" class="d-none">
+          <div class="role-login-badge admin-badge"><i class="bi bi-shield-check me-2"></i>Admin Portal — Restricted Access</div>
+        </div>
+        <!-- Shared email/password -->
+        <div class="mb-3 mt-3">
           <label class="form-label">Email Address</label>
           <input type="email" class="form-control hc-input" id="loginEmail" placeholder="your@email.com"/>
         </div>
         <div class="mb-3">
           <label class="form-label">Password</label>
           <input type="password" class="form-control hc-input" id="loginPassword" placeholder="••••••••"/>
+        </div>
+        <!-- Doctor extra field -->
+        <div id="field-licence" class="mb-3 d-none">
+          <label class="form-label">Medical Licence Number <span class="text-danger">*</span></label>
+          <input type="text" class="form-control hc-input" id="loginLicence" placeholder="e.g. MCI-2024-DL-12345" style="text-transform:uppercase"/>
+          <div class="form-text" style="color:var(--text-muted)">Issued by Medical Council of India or State Medical Council</div>
+        </div>
+        <!-- Admin extra field -->
+        <div id="field-admincode" class="mb-3 d-none">
+          <label class="form-label">Admin Access Code <span class="text-danger">*</span></label>
+          <input type="password" class="form-control hc-input" id="loginAdminCode" placeholder="Enter admin access code"/>
+          <div class="form-text" style="color:var(--text-muted)">Contact your system administrator for the access code</div>
         </div>
         <div class="d-flex justify-content-between align-items-center mb-3">
           <div class="form-check">
@@ -486,7 +523,7 @@
           <span id="loginSpinner" class="spinner-border spinner-border-sm ms-2 d-none"></span>
         </button>
         <hr class="my-3"/>
-        <p class="text-center small text-muted">Don't have an account? <a href="#" class="text-accent" onclick="switchModal('loginModal','registerModal')">Register now</a></p>
+        <p class="text-center small text-muted">No account? <a href="#" class="text-accent" onclick="switchModal('loginModal','registerModal')">Register as Patient</a></p>
       </div>
     </div>
   </div>

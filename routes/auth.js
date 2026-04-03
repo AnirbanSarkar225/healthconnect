@@ -36,7 +36,7 @@ router.post('/register', async (req, res) => {
 });
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role, licenceNumber, adminCode } = req.body;
     if (!email || !password) {
       return res.status(400).json({ success: false, message: 'Email and password are required' });
     }
@@ -44,11 +44,30 @@ router.post('/login', async (req, res) => {
     if (!user || !(await user.comparePassword(password))) {
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
+    // Role-specific additional verification
+    if (role === 'doctor') {
+      if (!licenceNumber || licenceNumber.trim().length < 4) {
+        return res.status(401).json({ success: false, message: 'Medical licence number is required for doctor login' });
+      }
+      // Store licence on first doctor login if not set
+      if (!user.licenceNumber) {
+        user.licenceNumber = licenceNumber.trim().toUpperCase();
+        await user.save();
+      } else if (user.licenceNumber.toUpperCase() !== licenceNumber.trim().toUpperCase()) {
+        return res.status(401).json({ success: false, message: 'Invalid medical licence number' });
+      }
+    }
+    if (role === 'admin') {
+      const validCode = process.env.ADMIN_CODE || 'HCADMIN2024';
+      if (!adminCode || adminCode !== validCode) {
+        return res.status(401).json({ success: false, message: 'Invalid admin access code' });
+      }
+    }
     const token = generateToken(user._id);
     res.json({
       success: true,
       token,
-      user: { id: user._id, fullName: user.fullName, email: user.email, role: user.role }
+      user: { id: user._id, fullName: user.fullName, email: user.email, role: role || user.role }
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

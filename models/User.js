@@ -17,6 +17,7 @@ const userSchema = new mongoose.Schema({
   allergies: [{ type: String }],
   currentMedications: [{ type: String }],
   role: { type: String, enum: ['patient', 'doctor', 'admin'], default: 'patient' },
+  licenceNumber: { type: String, default: '' },
   isActive: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now }
 });

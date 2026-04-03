@@ -51,6 +51,7 @@ app.use('/api/health', require('./routes/health'));
 app.use('/api/appointments', require('./routes/appointments'));
 app.use('/api/emergency', require('./routes/emergency'));
 app.use('/api/chat', require('./routes/chat'));
+app.use('/api/prescriptions', require('./routes/prescriptions'));
 app.get('/api/status', (req, res) => {
   res.json({ status: 'online', message: 'Health Connect API running', timestamp: new Date() });
 });

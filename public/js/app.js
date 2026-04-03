@@ -51,18 +51,45 @@ async function apiCall(endpoint, method = 'GET', body = null) {
     return { success: false, message: 'Cannot reach server. Make sure the backend is running on port 3000.' };
   }
 }
+let currentLoginRole = 'patient';
+
+function switchRoleTab(role) {
+  currentLoginRole = role;
+  ['patient','doctor','admin'].forEach(r => {
+    document.getElementById('tab-'+r)?.classList.toggle('active', r === role);
+    document.getElementById('fields-'+r)?.classList.toggle('d-none', r !== role);
+  });
+  document.getElementById('field-licence')?.classList.toggle('d-none', role !== 'doctor');
+  document.getElementById('field-admincode')?.classList.toggle('d-none', role !== 'admin');
+  hideError('loginError');
+}
+
 async function handleLogin() {
   hideError('loginError');
-  const email = document.getElementById('loginEmail').value.trim();
+  const email    = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
   if (!email || !password) return showError('loginError', 'Please fill in all fields.');
+
+  const body = { email, password, role: currentLoginRole };
+  if (currentLoginRole === 'doctor') {
+    const lic = document.getElementById('loginLicence')?.value.trim();
+    if (!lic) return showError('loginError', 'Medical licence number is required for doctor login.');
+    body.licenceNumber = lic;
+  }
+  if (currentLoginRole === 'admin') {
+    const code = document.getElementById('loginAdminCode')?.value.trim();
+    if (!code) return showError('loginError', 'Admin access code is required.');
+    body.adminCode = code;
+  }
+
   const btn = document.getElementById('loginBtn');
   const spinner = document.getElementById('loginSpinner');
   btn.disabled = true;
   spinner.classList.remove('d-none');
-  const res = await apiCall('/auth/login', 'POST', { email, password });
+  const res = await apiCall('/auth/login', 'POST', body);
   btn.disabled = false;
   spinner.classList.add('d-none');
+
   if (res.success) {
     authToken = res.token;
     localStorage.setItem('hc_token', res.token);
@@ -70,7 +97,10 @@ async function handleLogin() {
     hideModal('loginModal');
     showToast('Welcome back!', `Hello, ${res.user.fullName} 👋`);
     updateNavForLoggedIn(res.user);
-    setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
+    const dest = res.user.role === 'doctor' ? 'dashboard-doctor.html'
+               : res.user.role === 'admin'  ? 'dashboard-admin.html'
+               : 'dashboard.html';
+    setTimeout(() => { window.location.href = dest; }, 800);
   } else {
     showError('loginError', res.message || 'Login failed.');
   }
