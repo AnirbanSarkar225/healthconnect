@@ -1,75 +1,60 @@
 const express = require('express');
-const router  = express.Router();
-const jwt     = require('jsonwebtoken');
-const Prescription = require('../models/Prescription');
+const router = express.Router();
+const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 
 const auth = (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ success: false, message: 'No token' });
+    if (!token) return res.status(401).json({ success: false, message: 'No token provided' });
     req.user = jwt.verify(token, process.env.JWT_SECRET || 'healthconnect_secret');
     next();
-  } catch {
-    res.status(401).json({ success: false, message: 'Invalid token' });
+  } catch (err) {
+    res.status(401).json({ success: false, message: 'Invalid or expired token' });
   }
 };
 
-// POST  /api/prescriptions  — doctor or admin issues a prescription
-router.post('/', auth, async (req, res) => {
-  try {
-    const { patientId, diagnosis, medications, notes, doctor, appointmentId } = req.body;
-    if (!patientId || !diagnosis || !medications?.length) {
-      return res.status(400).json({ success: false, message: 'patientId, diagnosis and medications are required' });
-    }
-    const rx = await Prescription.create({
-      doctor:        doctor || req.user.fullName || 'Doctor',
-      doctorId:      req.user.id,
-      patient:       patientId,
-      appointmentId: appointmentId || null,
-      diagnosis,
-      medications,
-      notes: notes || ''
-    });
-    res.status(201).json({ success: true, prescription: rx });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
+// Prescription schema
+const prescriptionSchema = new mongoose.Schema({
+  patient:    { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  doctor:     { type: String, required: true },
+  diagnosis:  { type: String, required: true },
+  medications: [{
+    name:         { type: String, required: true },
+    dosage:       { type: String },
+    frequency:    { type: String },
+    duration:     { type: String },
+    instructions: { type: String }
+  }],
+  notes:     { type: String },
+  status:    { type: String, enum: ['active', 'completed', 'revoked'], default: 'active' },
+  issuedAt:  { type: Date, default: Date.now },
+  expiresAt: { type: Date }
 });
 
-// GET /api/prescriptions  — patient sees own; doctor sees ones they issued
+const Prescription = mongoose.models.Prescription || mongoose.model('Prescription', prescriptionSchema);
+
+// GET /api/prescriptions
 router.get('/', auth, async (req, res) => {
   try {
-    const filter = req.query.patientId
-      ? { patient: req.query.patientId }
-      : { patient: req.user.id };
-    const rxs = await Prescription.find(filter).sort({ issuedAt: -1 });
-    res.json({ success: true, prescriptions: rxs });
+    const prescriptions = await Prescription.find({ patient: req.user.id }).sort({ issuedAt: -1 });
+    res.json({ success: true, prescriptions });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 });
 
-// GET /api/prescriptions/:id  — single prescription
-router.get('/:id', auth, async (req, res) => {
+// POST /api/prescriptions (for doctors/admin to issue — simplified)
+router.post('/', auth, async (req, res) => {
   try {
-    const rx = await Prescription.findById(req.params.id);
-    if (!rx) return res.status(404).json({ success: false, message: 'Not found' });
-    res.json({ success: true, prescription: rx });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-// PUT /api/prescriptions/:id/revoke  — revoke
-router.put('/:id/revoke', auth, async (req, res) => {
-  try {
-    const rx = await Prescription.findByIdAndUpdate(
-      req.params.id,
-      { status: 'revoked' },
-      { new: true }
-    );
-    if (!rx) return res.status(404).json({ success: false, message: 'Not found' });
-    res.json({ success: true, prescription: rx });
+    const { doctor, diagnosis, medications, notes, expiresAt } = req.body;
+    if (!doctor || !diagnosis || !medications?.length) {
+      return res.status(400).json({ success: false, message: 'doctor, diagnosis and medications are required' });
+    }
+    const rx = await Prescription.create({
+      patient: req.user.id, doctor, diagnosis, medications, notes, expiresAt
+    });
+    res.status(201).json({ success: true, prescription: rx });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

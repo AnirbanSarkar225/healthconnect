@@ -395,9 +395,9 @@ async function loadAppointmentsPage() {
 async function cancelAppointment(id, btn) {
   showConfirm('Cancel this appointment?', async () => {
     btn.disabled = true;
-    const res = await apiCall(`/appointments/${id}`, 'DELETE');
+    const res = await apiCall(`/appointments/${id}/cancel`, 'PUT');
     if (res.success) {
-      showToast('Cancelled', 'Appointment cancelled and removed.');
+      showToast('Cancelled', 'Appointment cancelled.');
       const page = document.getElementById('page-appointments');
       if (page && !page.classList.contains('d-none')) loadAppointmentsPage();
       else loadOverviewAppointments();
@@ -1079,25 +1079,16 @@ const _origLoadPage = typeof loadPage === 'function' ? loadPage : null;
 
 // ─── Prescriptions Page ────────────────────────────────────────────
 async function loadPrescriptions() {
-  const c = document.getElementById('dashContent');
-  c.innerHTML = `
-    <div class="dash-page-header mb-4 d-flex align-items-center justify-content-between">
-      <div>
-        <h4 class="fw-700 mb-1"><i class="bi bi-file-earmark-medical text-accent me-2"></i>My Prescriptions</h4>
-        <p class="text-muted small mb-0">Digital prescriptions issued by your doctors</p>
-      </div>
-      <button class="btn btn-outline-secondary btn-sm" onclick="loadPrescriptions()"><i class="bi bi-arrow-clockwise me-1"></i>Refresh</button>
-    </div>
-    <div id="rxList"><div class="text-center py-5"><div class="spinner-border text-accent"></div></div></div>`;
-
-  const res = await apiCall('/prescriptions');
   const list = document.getElementById('rxList');
   if (!list) return;
+  list.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-accent"></div></div>';
+
+  const res = await apiCall('/prescriptions');
 
   if (!res.success || !res.prescriptions?.length) {
     list.innerHTML = `<div class="dash-card text-center py-5">
-      <i class="bi bi-file-earmark-medical fs-1 text-muted"></i>
-      <p class="text-muted mt-3">No prescriptions yet. Your doctor will add them here after a consultation.</p>
+      <i class="bi bi-file-earmark-medical fs-1" style="color:var(--text-muted)"></i>
+      <p style="color:var(--text-secondary);margin-top:12px">No prescriptions yet. Your doctor will add them here after a consultation.</p>
     </div>`;
     return;
   }
@@ -1105,33 +1096,28 @@ async function loadPrescriptions() {
   list.innerHTML = res.prescriptions.map(rx => {
     const statusColor = rx.status === 'active' ? 'success' : rx.status === 'revoked' ? 'danger' : 'secondary';
     const meds = rx.medications.map(m =>
-      `<div class="rx-med-row"><i class="bi bi-capsule-pill text-accent me-2"></i>
-        <strong>${m.name}</strong> ${m.dosage ? '— '+m.dosage : ''}
-        <span class="text-muted small ms-2">${m.frequency} · ${m.duration}</span>
-        ${m.instructions ? '<br><small class="text-muted ms-4">'+m.instructions+'</small>' : ''}
+      `<div class="rx-med-row"><i class="bi bi-capsule text-accent me-2"></i>
+        <strong style="color:var(--text-primary)">${m.name}</strong>${m.dosage ? ' — '+m.dosage : ''}
+        <span style="color:var(--text-secondary);font-size:0.82rem;margin-left:8px">${m.frequency || ''} ${m.duration ? '· '+m.duration : ''}</span>
+        ${m.instructions ? '<br><small style="color:var(--text-muted);margin-left:20px">'+m.instructions+'</small>' : ''}
       </div>`
     ).join('');
     return `<div class="dash-card mb-3">
       <div class="d-flex align-items-start justify-content-between mb-2">
         <div>
-          <h6 class="fw-700 mb-1"><i class="bi bi-clipboard2-pulse text-accent me-2"></i>${rx.diagnosis}</h6>
-          <small class="text-muted"><i class="bi bi-person-badge me-1"></i>${rx.doctor} &nbsp;·&nbsp; <i class="bi bi-calendar me-1"></i>${new Date(rx.issuedAt).toLocaleDateString('en-IN')}</small>
+          <h6 class="fw-700 mb-1" style="color:var(--text-primary)"><i class="bi bi-clipboard2-pulse text-accent me-2"></i>${rx.diagnosis}</h6>
+          <small style="color:var(--text-muted)"><i class="bi bi-person-badge me-1"></i>${rx.doctor} &nbsp;·&nbsp; <i class="bi bi-calendar me-1"></i>${new Date(rx.issuedAt).toLocaleDateString('en-IN')}</small>
         </div>
-        <span class="badge bg-${statusColor}-soft text-${statusColor} text-capitalize">${rx.status}</span>
+        <span class="badge bg-${statusColor === 'success' ? 'success' : statusColor === 'danger' ? 'danger' : 'secondary'} text-capitalize" style="opacity:0.85;font-size:0.75rem">${rx.status}</span>
       </div>
-      <div class="rx-meds-list mt-3">${meds}</div>
-      ${rx.notes ? `<div class="mt-2 p-2 rounded" style="background:var(--bg-elevated)"><small><i class="bi bi-chat-square-text me-1 text-muted"></i>${rx.notes}</small></div>` : ''}
-      <div class="mt-3 d-flex gap-2">
-        <button class="btn btn-xs btn-outline-secondary" onclick="printPrescription('${rx._id}')"><i class="bi bi-printer me-1"></i>Print</button>
-        <small class="text-muted ms-auto align-self-center">Expires: ${rx.expiresAt ? new Date(rx.expiresAt).toLocaleDateString('en-IN') : 'N/A'}</small>
+      <div class="mt-3 pt-2" style="border-top:1px solid var(--border)">${meds}</div>
+      ${rx.notes ? `<div class="mt-2 p-2 rounded" style="background:var(--bg-elevated)"><small style="color:var(--text-secondary)"><i class="bi bi-chat-square-text me-1" style="color:var(--text-muted)"></i>${rx.notes}</small></div>` : ''}
+      <div class="mt-3 d-flex gap-2 align-items-center">
+        <button class="btn btn-xs btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i>Print</button>
+        <small style="color:var(--text-muted);margin-left:auto">Expires: ${rx.expiresAt ? new Date(rx.expiresAt).toLocaleDateString('en-IN') : 'N/A'}</small>
       </div>
     </div>`;
   }).join('');
-}
-
-function printPrescription(id) {
-  showToast('Preparing Print', 'Opening print view for prescription...');
-  setTimeout(() => window.print(), 500);
 }
 
 // ─── Notifications Page ────────────────────────────────────────────
@@ -1147,9 +1133,10 @@ function pushNotification(title, body, type='info') {
 }
 
 function loadNotifications() {
-  const c = document.getElementById('dashContent');
+  const notifList = document.getElementById('notifList');
+  const countText = document.getElementById('notifCountText');
+  if (!notifList) return;
   const iconMap = { info:'bell', success:'check-circle', warning:'exclamation-triangle', danger:'x-circle' };
-  const colorMap = { info:'accent', success:'success', warning:'warning', danger:'danger' };
 
   // Seed sample notifications if empty
   if (!localNotifications.length) {
@@ -1162,44 +1149,36 @@ function loadNotifications() {
   }
 
   const unread = localNotifications.filter(n => !n.read).length;
-  c.innerHTML = `
-    <div class="dash-page-header mb-4 d-flex align-items-center justify-content-between">
-      <div>
-        <h4 class="fw-700 mb-1"><i class="bi bi-bell text-accent me-2"></i>Notifications</h4>
-        <p class="text-muted small mb-0">${unread} unread notification${unread !== 1 ? 's' : ''}</p>
-      </div>
-      <button class="btn btn-outline-secondary btn-sm" onclick="markAllRead()"><i class="bi bi-check2-all me-1"></i>Mark All Read</button>
-    </div>
-    <div id="notifList">
-      ${localNotifications.length === 0 ? `<div class="dash-card text-center py-5"><i class="bi bi-bell-slash fs-1 text-muted"></i><p class="text-muted mt-3">No notifications yet.</p></div>` :
-        localNotifications.map((n, i) => `
-        <div class="dash-card mb-2 d-flex align-items-start gap-3 ${n.read ? 'opacity-60' : ''}" style="cursor:pointer" onclick="readNotif(${i})">
-          <div class="notif-icon notif-${n.type}"><i class="bi bi-${iconMap[n.type] || 'bell'}"></i></div>
-          <div class="flex-grow-1">
-            <div class="d-flex justify-content-between align-items-start">
-              <span class="fw-600 ${n.read ? '' : 'text-accent'}">${n.title}</span>
-              <small class="text-muted ms-2 text-nowrap">${timeAgo(n.time)}</small>
-            </div>
-            <p class="text-muted small mb-0 mt-1">${n.body}</p>
+  if (countText) countText.textContent = `${unread} unread notification${unread !== 1 ? 's' : ''}`;
+
+  // Update badge
+  const badge = document.getElementById('notifBadge');
+  if (badge) { badge.textContent = unread; badge.classList.toggle('d-none', unread === 0); }
+
+  notifList.innerHTML = localNotifications.length === 0
+    ? `<div class="dash-card text-center py-5"><i class="bi bi-bell-slash fs-1" style="color:var(--text-muted)"></i><p style="color:var(--text-secondary);margin-top:12px">No notifications yet.</p></div>`
+    : localNotifications.map((n, i) => `
+      <div class="dash-card mb-2 d-flex align-items-start gap-3" style="cursor:pointer;opacity:${n.read ? '0.65' : '1'}" onclick="readNotif(${i})">
+        <div class="notif-icon notif-${n.type}"><i class="bi bi-${iconMap[n.type] || 'bell'}"></i></div>
+        <div style="flex:1">
+          <div class="d-flex justify-content-between align-items-start">
+            <span class="fw-600" style="color:${n.read ? 'var(--text-primary)' : 'var(--accent)'}">${n.title}</span>
+            <small style="color:var(--text-muted);margin-left:8px;white-space:nowrap">${timeAgo(n.time)}</small>
           </div>
-          ${!n.read ? '<span class="notif-dot"></span>' : ''}
-        </div>`).join('')
-      }
-    </div>`;
+          <p style="color:var(--text-secondary);font-size:0.83rem;margin:4px 0 0">${n.body}</p>
+        </div>
+        ${!n.read ? '<span class="notif-dot"></span>' : ''}
+      </div>`).join('');
 }
 
 function readNotif(i) {
   if (localNotifications[i]) { localNotifications[i].read = true; }
   loadNotifications();
-  const unread = localNotifications.filter(n => !n.read).length;
-  const badge = document.getElementById('notifBadge');
-  if (badge) { badge.textContent = unread; badge.classList.toggle('d-none', unread === 0); }
 }
 
 function markAllRead() {
   localNotifications.forEach(n => n.read = true);
   loadNotifications();
-  document.getElementById('notifBadge')?.classList.add('d-none');
 }
 
 function timeAgo(date) {

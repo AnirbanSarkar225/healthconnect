@@ -374,18 +374,14 @@
       </div>
     </div>
     <div id="page-reports" class="d-none">
-      <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+      <div class="page-header mb-4">
         <div>
           <h4 class="fw-700 mb-1"><i class="bi bi-file-medical text-accent me-2"></i>Health Reports</h4>
           <p class="text-muted small mb-0">Your medical history and health summaries</p>
         </div>
         <button class="btn btn-accent btn-sm" onclick="exportHealthRecord()">
-          <i class="bi bi-download me-2"></i>Export Health Record
+          <i class="bi bi-download me-2"></i>Export Record
         </button>
-      </div>
-      <div class="page-header mb-4">
-        <h4><i class="bi bi-file-medical text-accent me-2"></i>Health Reports</h4>
-        <button class="btn btn-accent btn-sm"><i class="bi bi-download me-1"></i>Export PDF</button>
       </div>
       <div class="row g-3">
         <div class="col-lg-4">
@@ -526,6 +522,26 @@
           </div>
         </div>
       </div>
+    </div>
+    <div id="page-prescriptions" class="d-none">
+      <div class="page-header mb-4">
+        <div>
+          <h4 class="fw-700 mb-1"><i class="bi bi-file-earmark-medical text-accent me-2"></i>My Prescriptions</h4>
+          <p class="text-muted small mb-0">Digital prescriptions issued by your doctors</p>
+        </div>
+        <button class="btn btn-outline-secondary btn-sm" onclick="loadPage('prescriptions')"><i class="bi bi-arrow-clockwise me-1"></i>Refresh</button>
+      </div>
+      <div id="rxList"><div class="text-center py-5" style="color:var(--text-secondary)">Loading prescriptions...</div></div>
+    </div>
+    <div id="page-notifications" class="d-none">
+      <div class="page-header mb-4">
+        <div>
+          <h4 class="fw-700 mb-1"><i class="bi bi-bell text-accent me-2"></i>Notifications</h4>
+          <p class="text-muted small mb-0" id="notifCountText">Loading...</p>
+        </div>
+        <button class="btn btn-outline-secondary btn-sm" onclick="markAllRead()"><i class="bi bi-check2-all me-1"></i>Mark All Read</button>
+      </div>
+      <div id="notifList"></div>
     </div>
     <div id="page-doctors" class="d-none">
       <div class="page-header mb-4">
