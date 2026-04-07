@@ -53,17 +53,6 @@ async function apiCall(endpoint, method = 'GET', body = null) {
 }
 let currentLoginRole = 'patient';
 
-function switchRoleTab(role) {
-  currentLoginRole = role;
-  ['patient','doctor','admin'].forEach(r => {
-    document.getElementById('tab-'+r)?.classList.toggle('active', r === role);
-    document.getElementById('fields-'+r)?.classList.toggle('d-none', r !== role);
-  });
-  document.getElementById('field-licence')?.classList.toggle('d-none', role !== 'doctor');
-  document.getElementById('field-admincode')?.classList.toggle('d-none', role !== 'admin');
-  hideError('loginError');
-}
-
 async function handleLogin() {
   hideError('loginError');
   const email    = document.getElementById('loginEmail').value.trim();
@@ -184,18 +173,15 @@ function logout() {
 
 // ─── Role tab switcher (login modal) ─────────────
 function switchRoleTab(role) {
-  // Update tab buttons
+  currentLoginRole = role;          // keep login handler in sync
+  window._loginRole = role;         // legacy alias
   ['patient','doctor','admin'].forEach(r => {
     document.getElementById(`tab-${r}`)?.classList.toggle('active', r === role);
     document.getElementById(`badge-${r}`)?.classList.toggle('d-none', r !== role);
   });
-  // Show/hide extra fields
   document.getElementById('field-licence')?.classList.toggle('d-none', role !== 'doctor');
   document.getElementById('field-admincode')?.classList.toggle('d-none', role !== 'admin');
-  // Clear any previous error
   document.getElementById('loginError')?.classList.add('d-none');
-  // Store active role
-  window._loginRole = role;
 }
 function goToDashboard() {
   if (authToken) {
