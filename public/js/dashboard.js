@@ -75,9 +75,18 @@ async function apiCall(endpoint, method = 'GET', body = null) {
   if (body) opts.body = JSON.stringify(body);
   try {
     const r = await fetch(API + endpoint, opts);
-    return await r.json();
+    const contentType = r.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+      return await r.json();
+    } else {
+      const text = await r.text();
+      if (r.status === 502) {
+         return { success: false, message: '502 Bad Gateway: Your Render server is crashing. Please check your Render dashboard logs (likely a MongoDB connection error).' };
+      }
+      return { success: false, message: `Server Error ${r.status}: ${text.substring(0, 50)}...` };
+    }
   } catch (err) {
-    return { success: false, message: 'Cannot reach server. Please try again later.' };
+    return { success: false, message: `Network error: ${err.message}. Is the server online?` };
   }
 }
 function updateDateTime() {

@@ -46,9 +46,20 @@ async function apiCall(endpoint, method = 'GET', body = null) {
   if (body) opts.body = JSON.stringify(body);
   try {
     const res = await fetch(API + endpoint, opts);
-    return await res.json();
+    
+    // Check if the response is JSON
+    const contentType = res.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+      return await res.json();
+    } else {
+      const text = await res.text();
+      if (res.status === 502) {
+         return { success: false, message: '502 Bad Gateway: Your Render server is crashing. Please check your Render dashboard logs (likely a MongoDB connection error).' };
+      }
+      return { success: false, message: `Server Error ${res.status}: ${text.substring(0, 50)}...` };
+    }
   } catch (e) {
-    return { success: false, message: 'Cannot reach server. Please try again later.' };
+    return { success: false, message: `Network error: ${e.message}. Is the server online?` };
   }
 }
 let currentLoginRole = 'patient';
