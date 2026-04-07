@@ -1,4 +1,4 @@
-const API = 'http://localhost:3000/api';
+const API = 'https://healthconnect-kon9.onrender.com/api';
 let authToken   = localStorage.getItem('hc_token') || null;
 let currentUser = null;
 let liveInterval = null;
@@ -77,7 +77,7 @@ async function apiCall(endpoint, method = 'GET', body = null) {
     const r = await fetch(API + endpoint, opts);
     return await r.json();
   } catch (err) {
-    return { success: false, message: 'Cannot reach server on port 3000. Is the backend running?' };
+    return { success: false, message: 'Cannot reach server. Please try again later.' };
   }
 }
 function updateDateTime() {
@@ -1224,7 +1224,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadCurrentUser();
   await loadOverviewAppointments();
   try {
-    const socket = io('http://localhost:3000', { transports:['websocket','polling'] });
+    const socket = io('https://healthconnect-kon9.onrender.com', { transports:['websocket','polling'] });
     socket.on('connect', () => {
       if (currentUser) socket.emit('user:join', currentUser._id);
     });

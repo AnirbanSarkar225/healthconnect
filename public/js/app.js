@@ -1,4 +1,4 @@
-const API = 'http://localhost:3000/api';
+const API = 'https://healthconnect-kon9.onrender.com/api';
 let authToken = localStorage.getItem('hc_token') || null;
 let demoInterval = null;
 let mainChartInstance = null;
@@ -48,7 +48,7 @@ async function apiCall(endpoint, method = 'GET', body = null) {
     const res = await fetch(API + endpoint, opts);
     return await res.json();
   } catch (e) {
-    return { success: false, message: 'Cannot reach server. Make sure the backend is running on port 3000.' };
+    return { success: false, message: 'Cannot reach server. Please try again later.' };
   }
 }
 let currentLoginRole = 'patient';
@@ -443,7 +443,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.history.replaceState({}, document.title, window.location.pathname);
   }
   try {
-    const socket = io('http://localhost:3000', { transports: ['websocket', 'polling'] });
+    const socket = io('https://healthconnect-kon9.onrender.com', { transports: ['websocket', 'polling'] });
     socket.on('connect', () => console.log('🔌 Socket connected to backend'));
     socket.on('alert:critical', () => showToast('🚨 Critical Alert', 'A critical vital reading was detected.'));
     socket.on('connect_error', (e) => console.warn('Socket connection error:', e.message));
