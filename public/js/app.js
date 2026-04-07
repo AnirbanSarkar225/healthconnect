@@ -1,4 +1,4 @@
-const API = 'http://localhost:3000/api';
+const API = 'https://healthconnect-dbe4.onrender.com/api';
 let authToken = localStorage.getItem('hc_token') || null;
 let demoInterval = null;
 let mainChartInstance = null;
@@ -180,6 +180,22 @@ function logout() {
   localStorage.removeItem('hc_token');
   localStorage.removeItem('hc_user');
   location.reload();
+}
+
+// ─── Role tab switcher (login modal) ─────────────
+function switchRoleTab(role) {
+  // Update tab buttons
+  ['patient','doctor','admin'].forEach(r => {
+    document.getElementById(`tab-${r}`)?.classList.toggle('active', r === role);
+    document.getElementById(`badge-${r}`)?.classList.toggle('d-none', r !== role);
+  });
+  // Show/hide extra fields
+  document.getElementById('field-licence')?.classList.toggle('d-none', role !== 'doctor');
+  document.getElementById('field-admincode')?.classList.toggle('d-none', role !== 'admin');
+  // Clear any previous error
+  document.getElementById('loginError')?.classList.add('d-none');
+  // Store active role
+  window._loginRole = role;
 }
 function goToDashboard() {
   if (authToken) {
@@ -441,7 +457,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.history.replaceState({}, document.title, window.location.pathname);
   }
   try {
-    const socket = io('http://localhost:3000', { transports: ['websocket', 'polling'] });
+    const socket = io('https://healthconnect-dbe4.onrender.com', { transports: ['websocket', 'polling'] });
     socket.on('connect', () => console.log('🔌 Socket connected to backend'));
     socket.on('alert:critical', () => showToast('🚨 Critical Alert', 'A critical vital reading was detected.'));
     socket.on('connect_error', (e) => console.warn('Socket connection error:', e.message));

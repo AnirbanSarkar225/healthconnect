@@ -400,6 +400,7 @@ span { color: inherit; }
 }
 .hc-input option { background: var(--bg-elevated); color: var(--text-primary); }
 .hc-input::placeholder { color: var(--text-muted); }
+textarea.hc-input { resize: vertical; min-height: 80px; }
 .emergency-modal {
   background: var(--bg-card);
   border: 2px solid var(--danger);
@@ -460,6 +461,19 @@ span { color: inherit; }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg-base); }
 ::-webkit-scrollbar-thumb { background: rgba(0,212,170,0.3); border-radius: 3px; }
+/* ── Alert overrides inside dark modals ── */
+.hc-modal .alert-danger  { background: rgba(255,71,87,0.12);  border-color: rgba(255,71,87,0.3);  color: #ff6b7a; }
+.hc-modal .alert-success { background: rgba(46,213,115,0.12); border-color: rgba(46,213,115,0.3); color: #2ed573; }
+
+/* ── Form check label always visible ── */
+.form-check-label { color: var(--text-secondary) !important; font-size: 0.875rem; }
+
+/* ── form-text (help text under inputs) ── */
+.form-text { color: var(--text-muted) !important; font-size: 0.78rem; }
+
+/* ── section-header text-center alignment ── */
+.section-sub.mx-auto { margin-left: auto; margin-right: auto; }
+
 canvas { background: transparent !important; }
 @media (max-width: 768px) {
   .section-pad { padding: 50px 0; }
