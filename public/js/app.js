@@ -1,4 +1,4 @@
-const API = 'https://healthconnect-dbe4.onrender.com/api';
+const API = 'http://localhost:3000/api';
 let authToken = localStorage.getItem('hc_token') || null;
 let demoInterval = null;
 let mainChartInstance = null;
@@ -443,7 +443,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.history.replaceState({}, document.title, window.location.pathname);
   }
   try {
-    const socket = io('https://healthconnect-dbe4.onrender.com', { transports: ['websocket', 'polling'] });
+    const socket = io('http://localhost:3000', { transports: ['websocket', 'polling'] });
     socket.on('connect', () => console.log('🔌 Socket connected to backend'));
     socket.on('alert:critical', () => showToast('🚨 Critical Alert', 'A critical vital reading was detected.'));
     socket.on('connect_error', (e) => console.warn('Socket connection error:', e.message));

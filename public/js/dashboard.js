@@ -1,4 +1,4 @@
-const API = 'https://healthconnect-dbe4.onrender.com/api';
+const API = 'http://localhost:3000/api';
 let authToken   = localStorage.getItem('hc_token') || null;
 let currentUser = null;
 let liveInterval = null;
@@ -1224,7 +1224,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadCurrentUser();
   await loadOverviewAppointments();
   try {
-    const socket = io('https://healthconnect-dbe4.onrender.com', { transports:['websocket','polling'] });
+    const socket = io('http://localhost:3000', { transports:['websocket','polling'] });
     socket.on('connect', () => {
       if (currentUser) socket.emit('user:join', currentUser._id);
     });

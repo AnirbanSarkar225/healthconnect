@@ -11,7 +11,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ['https://healthconnect-pied.vercel.app'],
+    origin: ['http://127.0.0.1:5500', 'http://localhost:5500', 'http://localhost:3000'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
   }
@@ -37,7 +37,7 @@ setInterval(async () => {
   }
 }, 5 * 60 * 1000);
 app.use(cors({
-  origin: ['https://healthconnect-pied.vercel.app', 'https://healthconnect-dbe4.onrender.com'],
+  origin: ['http://127.0.0.1:5500', 'http://localhost:5500', 'http://localhost:3000'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
@@ -86,8 +86,8 @@ server.listen(PORT, () => {
   console.log(`
 ╔══════════════════════════════════════════╗
 ║    🏥 HEALTH CONNECT SERVER              ║
-║    API:      https://healthconnect-dbe4.onrender.com    ║
-║    Frontend: https://healthconnect-pied.vercel.app       ║
+║    API:      http://localhost:${PORT}                    ║
+║    Frontend: http://127.0.0.1:5500                       ║
 ╚══════════════════════════════════════════╝
   `);
 });
